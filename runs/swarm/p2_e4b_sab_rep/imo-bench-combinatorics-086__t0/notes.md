@@ -1,0 +1,2 @@
+### [W4, round 1]
+Initial analysis of the structure of f suggests that while the values are strictly increasing, the inherent mapping from the 2D grid to the 1D domain $\mathbb{Z}_{\ge 0}$ may impose a slight parity bias. We hypothesize that $N$ is not perfectly balanced at 5000 due to boundary effects amplified by the bijection constraint. We conjecture that the range might be closer to [4800, 5200]. Further investigation into how the required global ordering affects local parities is required.

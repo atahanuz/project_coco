@@ -1,0 +1,165 @@
+{
+ "record": {
+  "id": "imo-bench-combinatorics-088",
+  "trial": 0,
+  "error": null,
+  "seconds": 543.2,
+  "n_cands": 2,
+  "verdicts": [
+   {
+    "label": "A",
+    "key": "('num', Fraction(126, 1))",
+    "answer": "126",
+    "result": "REFUTED",
+    "evidence": "A complete bipartite graph K_{2,9} gives a sum of 126, but a graph with a clique of size 3 and 8 vertices connected only to that clique gives 168.",
+    "via": "tool"
+   },
+   {
+    "label": "B",
+    "key": "('num', Fraction(168, 1))",
+    "answer": "168",
+    "result": "CONFIRMED",
+    "evidence": "A graph with a clique of size 3 (or 4) and the remaining 8 (or 7) vertices connected only to that clique achieves a sum of 168. Hill-climbing and search over complete multipartite graphs also found 168 as the maximum.",
+    "via": "tool"
+   }
+  ],
+  "status": "checked",
+  "steps": 6,
+  "calls": 6,
+  "prompt_tokens": 28741,
+  "completion_tokens": 8334,
+  "n_python": 4
+ },
+ "log": [
+  {
+   "agent": "CHECKER",
+   "round": 1,
+   "step": 0,
+   "finish": "tool_calls",
+   "completion_tokens": 2263,
+   "prompt_tokens": 607,
+   "reasoning_chars": 4593,
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "run_python",
+     "args": {
+      "code": "import networkx as nx\nimport itertools\nimport random\n\ndef calculate_sum_labels(G):\n    degrees = dict(G.degree())\n    s = 0\n    for u, v in G.edges():\n        s += abs(degrees[u] - degrees[v])\n    return s\n\ndef solve():\n    max_s = 0\n    n = 11\n    # Try some random graphs\n    for _ in range(10000):\n        p = random.random()\n        G = nx.fast_gnp_random_graph(n, p)\n        max_s = max(max_s, calculate_sum_labels(G))\n        \n    # Try bipartite graphs with different partition sizes\n    for k in range(1, n // 2 + 1):\n        G = nx.complete_bipartite_graph(k, n - k)\n        max_s = max(max_s, calculate_sum_labels(G))\n        \n    # Try split graphs or other structures\n    # Since n=11 is small, maybe we can try some specific degree sequences\n    # but generating graphs from degree sequences is hard.\n    # Let's try a simple hill-climbing approach.\n    \n    def hill_climb():\n        nonlocal max_s\n        G = nx.gnp_random_graph(n, 0.5)\n        current_s = calculate_sum_labels(G)\n        improved = True\n        while improved:\n            improved = False\n            nodes = list(range(n))\n            for u, v in itertools.combinations(nodes, 2):\n                if G.has_edge(u, v):\n                    G.remove_edge(u, v)\n                    new_s = calculate_sum_labels(G)\n                    if new_s > current_s:\n                        current_s = new_s\n                        improved = True\n                        break\n                    else:\n                        G.add_edge(u, v)\n                else:\n                    G.add_edge(u, v)\n                    new_s = calculate_sum_labels(G)\n                    if new_s > current_s:\n                        current_s = new_s\n                        improved = True\n                        break\n                    else:\n                        G.remove_edge(u, v)\n        max_s = max(max_s, current_s)\n\n    for _ in range(100):\n        hill_climb()\n        \n    return max_s\n\nprint(solve())\n"
+     },
+     "salvaged": false,
+     "result": "168"
+    }
+   ],
+   "reasoning_excerpt": "*   Graph $G$ has $n=11$ vertices.\n    *   Edge $e = (u, v)$ has label $L(e) = |deg(u) - deg(v)|$. (Wait, the problem says \"the difference of the degrees of its endpoints\". Usually, in such problems, it implies the absolute difference, but let's re-read carefully: \"the difference of the degrees of its endpoints\". Does this mean $deg(u) - deg(v)$ or $|deg(u) - deg(v)|$? If it were $deg(u) - deg(v)$, the sum would be $\\sum_{(u,v) \\in E} (deg(u) - deg(v))$. But edges are unordered pairs, so we need a convention. Usually, \"difference\" in this context refers to the absolute difference $|deg(u) - deg(v)|$ to make the label well-defined for an edge.)\n    *   Actually, if the sum is $\\sum_{(u,v) \\in E} (deg(u) - deg(v))$, we have to define an orientation for every edge. If the sum is over absolute differences, it's $\\sum_{(u,v) \\in E} |deg(u) - deg(v)|$. Let's assume it's absolute difference.\n    *   Target: Maximize $S = \\sum_{(u,v) \\in E} |deg(u) - deg(v)|$.\n\n    *   $n=11$.\n    *   $S = \\sum_{(u,v) \\in E} |deg(u) - deg(v)|$.\n\n    *   Candidate A: 126\n    *   Candidate B: 168\n\n    *   I can write a Python script to iterate through different graph structures (like complete bipartite graph [...] be an independent set of size $n-c$.\n    *   Let every vertex in $I$ be connected to $s$ vertices in $C$.\n    *   Degrees:\n        *   $v \\in I: deg(v) = s$.\n        *   $v \\in C$: $deg(v) = (c-1) + (\\text{number of neighbors in } I)$.\n        *   To keep it simple, let's say each vertex in $C$ has the same number of neighbors in $I$.\n        *   Total edges from $I$ to $C$ is $(n-c)s$.\n        *   Each vertex in $C$ has $\\frac{(n-c)s}{c}$ neighbors in $I$.\n        *   $deg(v \\in C) = (c-1) + \\frac{(n-c)s}{c}$.\n        *   $S = (n-c)s \\cdot |(c-1 + \\frac{(n-c)s}{c}) - s| + \\sum_{(u,v) \\in E(C)} |deg(u) - deg(v)|$.\n        *   Since all vertices in $C$ have the same degree, the second term is 0.\n        *   $S = (n-c)s \\cdot |c-1 + \\frac{ns-cs}{c} - s| = (n-c)s \\cdot |c-1 + \\frac{ns}{c} - s - s| = (n-c)s |c-1 + \\frac{ns}{c} - 2s|$.\n\n    *   Let's use Python to test more general configurations.\n    *   Since $n=11$ is small, we can't iterate all graphs, but we can try to optimize the degree sequence or use a local search.\n\n    *   Wait, the problem says \"the difference of the degrees of its endpoints\". If the graph is $K_{2,9}$, we get 126.\n    *   Let's try to see if we can get 168."
+  },
+  {
+   "agent": "CHECKER",
+   "round": 1,
+   "step": 1,
+   "finish": "tool_calls",
+   "completion_tokens": 596,
+   "prompt_tokens": 2889,
+   "reasoning_chars": 398,
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "run_python",
+     "args": {
+      "code": "import networkx as nx\nimport itertools\nimport random\n\ndef calculate_sum_labels(G):\n    degrees = dict(G.degree())\n    s = 0\n    for u, v in G.edges():\n        s += abs(degrees[u] - degrees[v])\n    return s\n\ndef hill_climb(n):\n    G = nx.gnp_random_graph(n, random.random())\n    current_s = calculate_sum_labels(G)\n    improved = True\n    while improved:\n        improved = False\n        nodes = list(range(n))\n        # We can shuffle the edges to avoid getting stuck in the same pattern\n        edges = list(itertools.combinations(nodes, 2))\n        random.shuffle(edges)\n        for u, v in edges:\n            if G.has_edge(u, v):\n                G.remove_edge(u, v)\n                new_s = calculate_sum_labels(G)\n                if new_s > current_s:\n                    current_s = new_s\n                    improved = True\n                    break\n                else:\n                    G.add_edge(u, v)\n            else:\n                G.add_edge(u, v)\n                new_s = calculate_sum_labels(G)\n                if new_s > current_s:\n                    current_s = new_s\n                    improved = True\n                    break\n                else:\n                    G.remove_edge(u, v)\n    return G, current_s\n\nn = 11\nbest_G = None\nbest_s = 0\nfor _ in range(200):\n    G, s = hill_climb(n)\n    if s > best_s:\n        best_s = s\n        best_G = G\n\nprint(f\"Best S: {best_s}\")\nif best_G:\n    print(f\"Edges: {best_G.edges()}\")\n    print(f\"Degrees: {dict(best_G.degree())}\")\n"
+     },
+     "salvaged": false,
+     "result": "Best S: 168\nEdges: [(0, 5), (0, 7), (0, 1), (0, 8), (1, 6), (1, 4), (1, 2), (1, 3), (1, 9), (1, 8), (1, 5), (1, 10), (1, 7), (2, 8), (2, 7), (2, 5), (3, 7), (3, 5), (3, 8), (4, 8), (4, 7), (4, 5), (5, 9), (5, 6), (5, 10), (5, 7), (5, 8), (6, 7), (6, 8), (7, 10), (7, 8), (7, 9), (8, 10), (8, 9)]\nDegrees: {0: 4, 1: 10, 2: 4, 3: 4, 4: 4, 5: 10, 6: 4, 7: 10, 8: 10, 9: 4, 10: 4}"
+    }
+   ],
+   "reasoning_excerpt": "Okay, my hill-climbing search found 168! This means Candidate B is plausible and Candidate A (126) is not the maximum.\nWait, I should check if I can find a value *larger* than 168.\nI'll run the hill-climbing more rigorously and maybe try some other strategies.\n\nWait, I got 168. Let me see what graph produced 168.\nI will modify the code to output the graph's edges and degrees for the best result."
+  },
+  {
+   "agent": "CHECKER",
+   "round": 1,
+   "step": 2,
+   "finish": "tool_calls",
+   "completion_tokens": 2151,
+   "prompt_tokens": 3792,
+   "reasoning_chars": 3675,
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "run_python",
+     "args": {
+      "code": "import networkx as nx\nimport itertools\nimport random\n\ndef calculate_sum_labels(G):\n    degrees = dict(G.degree())\n    s = 0\n    for u, v in G.edges():\n        s += abs(degrees[u] - degrees[v])\n    return s\n\ndef hill_climb(n):\n    # Start with a random graph with a random edge probability\n    p = random.random()\n    G = nx.gnp_random_graph(n, p)\n    current_s = calculate_sum_labels(G)\n    improved = True\n    while improved:\n        improved = False\n        nodes = list(range(n))\n        edges = list(itertools.combinations(nodes, 2))\n        random.shuffle(edges)\n        for u, v in edges:\n            if G.has_edge(u, v):\n                G.remove_edge(u, v)\n                new_s = calculate_sum_labels(G)\n                if new_s > current_s:\n                    current_s = new_s\n                    improved = True\n                    break\n                else:\n                    G.add_edge(u, v)\n            else:\n                G.add_edge(u, v)\n                new_s = calculate_sum_labels(G)\n                if new_s > current_s:\n                    current_s = new_s\n                    improved = True\n                    break\n                else:\n                    G.remove_edge(u, v)\n    return current_s\n\nn = 11\nmax_s = 0\nfor i in range(1000):\n    s = hill_climb(n)\n    if s > max_s:\n        max_s = s\nprint(max_s)\n"
+     },
+     "salvaged": false,
+     "result": "168"
+    }
+   ],
+   "reasoning_excerpt": "The degrees are:\n- 4 vertices of degree 10: {1, 5, 7, 8}\n- 7 vertices of degree 4: {0, 2, 3, 4, 6, 9, 10}\n\nWait, let me re-check.\nDegrees are {0: 4, 1: 10, 2: 4, 3: 4, 4: 4, 5: 10, 6: 4, 7: 10, 8: 10, 9: 4, 10: 4}.\nSo we have:\n- $V_{high} = \\{1, 5, 7, 8\\}$, $|V_{high}| = 4$. Each has degree 10.\n- $V_{low} = \\{0, 2, 3, 4, 6, 9, 10\\}$, $|V_{low}| = 7$. Each has degree 4.\n\nWait, this graph's total number of edges is $(4*10 + 7*4)/2 = (40+28)/2 = 68/2 = 34$.\nLet's check if these degrees are consistent with the edges.\nThe edges are:\n- (0, 5), (0, 7), (0, 1), (0, 8)  -> 0 is connected to all 4 high degree vertices. (deg 4)\n- (1, 6), (1, 4), (1, 2), (1, 3), (1, 9), (1, 8), (1, 5), (1, 10), (1, 7)  Wait, 1 is connected to (6, 4, 2, 3, 9, 10) and (8, 5, 7). That's 6 low-degree and 3 high-degree. Wait, 0 is also connected to 1. So 6+3+1=10. Correct.\n- Let's check the edges from the high-degree vertices:\n  - 1: 0, 6, 4, 2, 3, 9, 8, 5, 10, 7 (10 edges)\n  - 5: 0, 1, 2, 3, 4, 9, 6, 10, 7, 8 (10 edges)\n  - 7: 0, 1, 2, 3, 4, 6, 10, 8, 9, 5 (10 edges)\n  - 8: 0, 1, 2, 3, 4, 6, 10, 7, 9, 5 (10 edges)\n\nAll high-degree vertices (1, 5, 7, 8) are connected to all other vertices (including other high-degr [...] n-k)$.\n  Wait, $(k-1) + (n-k) = n-1$.\n  So every vertex in $V_{high}$ has degree $n-1$.\n  Sum = $(n-k) \\cdot k \\cdot |(n-1) - k| + \\binom{k}{2} \\cdot |(n-1) - (n-1)|$.\n  $S = k(n-k)(n-k-1)$.\n\nLet's test this formula for $n=11$:\n- $k=1: 1(10)(10-1) = 10 \\cdot 9 = 90$.\n- $k=2: 2(9)(9-1) = 18 \\cdot 8 = 144$.\n- $k=3: 3(8)(8-1) = 24 \\cdot 7 = 168$.\n- $k=4: 4(7)(7-1) = 28 \\cdot 6 = 168$.\n- $k=5: 5(6)(6-1) = 30 \\cdot 5 = 150$.\n- $k=6: 6(5)(5-1) = 30 \\cdot 4 = 120$.\n\nSo we have 168. Can we get higher?\nWhat if the vertices in $V_{low}$ are not just connected to $V_{high}$, but also to each other?\nOr what if $V_{high}$ is not a clique?\nLet's use Python to test some other configurations.\nOne interesting configuration is a \"threshold graph\" or a \"complete multipartite graph\".\nBut the current formula $S = k(n-k)(n-k-1)$ seems strong.\nWait, let's check if $k=3$ or $k=4$ gives 168.\nFor $k=3$, $S = 3 \\cdot 8 \\cdot 7 = 168$.\nFor $k=4$, $S = 4 \\cdot 7 \\cdot 6 = 168$.\n\nCould there be a better structure?\nLet's try to use the hill-climbing more. I'll run it for more iterations and with different starting graphs.\nAlso, let's try different $n$.\nActually, I'll just run the hill-climbing for a longer time."
+  },
+  {
+   "agent": "CHECKER",
+   "round": 1,
+   "step": 3,
+   "finish": "tool_calls",
+   "completion_tokens": 309,
+   "prompt_tokens": 5961,
+   "reasoning_chars": 377,
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "run_python",
+     "args": {
+      "code": "import networkx as nx\n\ndef calculate_sum_labels(G):\n    degrees = dict(G.degree())\n    s = 0\n    for u, v in G.edges():\n        s += abs(degrees[u] - degrees[v])\n    return s\n\ndef get_partitions(n):\n    if n == 0:\n        yield []\n        return\n    for i in range(1, n + 1):\n        for p in get_partitions(n - i):\n            yield p + [i]\n\nmax_s = 0\nfor p in get_partitions(11):\n    G = nx.complete_multipartite_graph(*p)\n    max_s = max(max_s, calculate_sum_labels(G))\n\nprint(max_s)\n"
+     },
+     "salvaged": false,
+     "result": "168"
+    }
+   ],
+   "reasoning_excerpt": "The result is consistently 168.\nIs it possible that 168 is the absolute maximum?\nLet's try some other structures just in case.\nWhat if the graph is a complete multipartite graph $K_{n_1, n_2, \\dots, n_m}$?\nWait, I can just test all complete multipartite graphs.\nA complete multipartite graph is defined by the sizes of its parts.\nFor $n=11$, the partition of 11 into $m$ parts."
+  },
+  {
+   "agent": "CHECKER",
+   "round": 1,
+   "step": 4,
+   "finish": "tool_calls",
+   "completion_tokens": 2894,
+   "prompt_tokens": 6288,
+   "reasoning_chars": 7120,
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "verdict",
+     "args": {
+      "candidate": "A",
+      "evidence": "A complete bipartite graph K_{2,9} gives a sum of 126, but a graph with a clique of size 3 and 8 vertices connected only to that clique gives 168.",
+      "result": "REFUTED"
+     },
+     "salvaged": false,
+     "result": "Recorded. Still to judge: B."
+    }
+   ],
+   "reasoning_excerpt": "Wait, what if the graph is not a complete multipartite graph?\nMy hill-climbing already suggests 168.\nLet's double-check if there's any other potential graph.\nWhat about a graph where degrees are not so uniform?\nThe formula $S = \\sum_{(u,v) \\in E} |deg(u) - deg(v)|$.\nThis is similar to the problem of maximizing the sum of absolute differences.\nIn general, for any graph, $S = \\sum_{(u,v) \\in E} |deg(u) - deg(v)| \\le \\dots$\nThere's a known result that for a graph with $n$ vertices, this sum is maximized by a complete bipartite graph or some other specific structures.\nWait, let's re-verify the $k=3$ and $k=4$ case for $k(n-k)(n-k-1)$.\nFor $k=3$, $S = 3 \\cdot 8 \\cdot 7 = 168$.\nFor $k=4$, $S = 4 \\cdot 7 \\cdot 6 = 168$.\nWait, $n-k-1$ is the degree of vertices in $V_{high}$ *minus* the degree of vertices in $V_{low}$ if $V_{high}$ is a clique and $V_{low}$ vertices are only connected to $V_{high}$ vertices.\nLet's re-calculate.\n- $V_{high}$ size $k$, $V_{low}$ size $n-k$.\n- All $v \\in V_{low}$ connected to all $v \\in V_{high}$.\n- All $v \\in V_{high}$ connected to each other (clique).\n- No edges within $V_{low}$.\nDegrees:\n- $v \\in V_{low}: deg(v) = k$.\n- $v \\in V_{high}: deg(v) = (k-1) + (n- [...] higher.\n\nWait, let me check $k=3$ again.\n$n=11$. $V_{high} = \\{1, 2, 3\\}$, $V_{low} = \\{4, \\dots, 11\\}$.\n- $V_{high}$ is a clique: edges (1,2), (1,3), (2,3). (3 edges)\n- All $V_{low}$ connected to all $V_{high}$: edges (4,1), (4,2), (4,3), ..., (11,1), (11,2), (11,3). (8 * 3 = 24 edges)\n- Degrees:\n  - $v \\in V_{low}: deg(v) = 3$.\n  - $v \\in V_{high}: deg(v) = 2 + 8 = 10$.\n- Labels:\n  - Edges within $V_{high}$: $10 - 10 = 0$.\n  - Edges between $V_{high}$ and $V_{low}$: $10 - 3 = 7$.\n  - Total sum: $24 \\cdot 7 + 3 \\cdot 0 = 168$.\n\nCheck $k=4$:\n$n=11$. $V_{high} = \\{1, 2, 3, 4\\}$, $V_{low} = \\{5, \\dots, 11\\}$.\n- $V_{high}$ is a clique: $\\binom{4}{2} = 6$ edges.\n- All $V_{low}$ connected to all $V_{high}$: $7 \\cdot 4 = 28$ edges.\n- Degrees:\n  - $v \\in V_{low}: deg(v) = 4$.\n  - $v \\in V_{high}: deg(v) = 3 + 7 = 10$.\n- Labels:\n  - Edges within $V_{high}$: $10 - 10 = 0$.\n  - Edges between $V_{high}$ and $V_{low}$: $10 - 4 = 6$.\n  - Total sum: $28 \\cdot 6 + 6 \\cdot 0 = 168$.\n\nThe candidate answers are 126 and 168.\nSince I found 168 and tried to find anything larger without success, B is the correct answer.\nCandidate A is 126, which is what we get from $K_{2,9}$. But that's not the maximum."
+  },
+  {
+   "agent": "CHECKER",
+   "round": 1,
+   "step": 5,
+   "finish": "tool_calls",
+   "completion_tokens": 121,
+   "prompt_tokens": 9204,
+   "reasoning_chars": 144,
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "verdict",
+     "args": {
+      "candidate": "B",
+      "evidence": "A graph with a clique of size 3 (or 4) and the remaining 8 (or 7) vertices connected only to that clique achieves a sum of 168. Hill-climbing and search over complete multipartite graphs also found 168 as the maximum.",
+      "result": "CONFIRMED"
+     },
+     "salvaged": false,
+     "result": "Recorded. Still to judge: nothing."
+    }
+   ],
+   "reasoning_excerpt": "The candidate B is 168, which I have confirmed by multiple means (hill-climbing, testing complete multipartite graphs, and manual construction)."
+  }
+ ]
+}

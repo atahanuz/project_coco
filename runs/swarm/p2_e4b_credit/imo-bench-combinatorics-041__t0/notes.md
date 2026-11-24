@@ -1,0 +1,180 @@
+### [W1, round 1]
+Small-scale computational exploration performed for Q(x, y, z; a, b, c) using x, y, z in {0, 1, 2}.
+
+**Query 1: C1 = (0, 0, 0)**
+The function is not injective. Several collisions were found. Notably:
+- Q=2 is achieved by 3 triplets: {(0, 0, 1), (0, 1, 0), (1, 0, 0)}.
+- Q=6 is achieved by 7 triplets.
+- Q=10 is achieved by 3 triplets: {(1, 2, 2), (2, 1, 2), (2, 2, 1)}.
+
+**Query 2: C2 = (9, 9, 9)**
+The function is not injective. Notable collisions:
+- Q=52 is achieved by 3 triplets: {(0, 0, 1), (0, 1, 0), (1, 0, 0)}.
+- Q=44 is achieved by 3 triplets: {(1, 2, 2), (2, 1, 2), (2, 2, 1)}.
+
+**Query 3: C3 = (5, 5, 5)**
+The function is not injective. Notable collisions:
+- Q=28 is achieved by 3 triplets: {(0, 0, 1), (0, 1, 0), (1, 0, 0)}.
+- Q=20 is achieved by 3 triplets: {(1, 2, 2), (2, 1, 2), (2, 2, 1)}.
+
+Conclusion: Since the function is not injective even for small restricted domains and fixed queries, multiple questions are required, and the ability to uniquely determine (x, y, z) depends on the combination of all queried results.
+
+### [W4, round 1]
+Theoretical Lower Bound Analysis:
+1. Total possible input states (x, y, z): |S| = 10^3 = 1000.
+2. Maximum range of a single query Q(a, b, c): Q_max = 54 (since 3 * 18 = 54). The number of possible outcomes K_max = 55 (0 to 54).
+3. Information Theory Lower Bound: We require K_max^N >= |S|.
+4. Solving for N: 55^N >= 1000, which gives N >= log_55(1000) approx 1.72.
+5. Therefore, the theoretical lower bound on the number of questions is N >= 2.
+
+### [W2, round 1]
+### Algebraic Analysis of $Q(a, b, c)$
+
+The function is defined as $Q(a, b, c) = |x+y-a-b| + |y+z-b-c| + |z+x-c-a|$, where $x, y, z$ are fixed unknowns ($0 \le x, y, z \le 9$) and $a, b, c$ are the query variables ($0 \le a, b, c \le 9$).
+
+Let's define the terms inside the absolute values:
+1. $T_1 = x+y - (a+b)$
+2. $T_2 = y+z - (b+c)$
+3. $T_3 = z+x - (c+a)$
+
+$Q(a, b, c) = |T_1| + |T_2| + |T_3|$.
+
+The absolute value signs can be removed if the relative magnitudes of $T_1, T_2, T_3$ are known. Since there are $2^3=8$ combinations of signs for $(T_1, T_2, T_3)$, there are 8 possible linear forms for $Q(a, b, c)$.
+
+**Case 1: All terms are non-negative ($T_1 \ge 0, T_2 \ge 0, T_3 \ge 0$)**
+In this case, $Q(a, b, c) = T_1 + T_2 + T_3$.
+$$Q = (x+y-a-b) + (y+z-b-c) + (z+x-c-a)$$
+$$Q = (x+x) + (y+y) + (z+z) - (a+a) - (b+b) - (c+c)$$
+$$Q = 2x + 2y + 2z - 2a - 2b - 2c$$
+$$Q = 2(x+y+z - a - b - c)$$
+
+**General Structure Observation:**
+If we sum the terms inside the absolute values, we get:
+$$T_1 + T_2 + T_3 = 2(x+y+z) - 2(a+b+c)$$
+In any configuration where the signs are constant (e.g., all positive, or all negative), the resulting simplification is a multiple of this sum, $k \cdot 2(x+y+z - a - b - c)$, where $k$ is $\pm 1$. For mixed signs, the coefficient of $x+y+z$ and $a+b+c$ will be $\pm 2$ based on how many terms $T_i$ contributed positively or negatively to the sum.
+
+This analysis confirms that the function $Q$ is fundamentally a linear combination of the inner terms, scaled by $\pm 1$, provided the signs are fixed. The structure shows that the dependence on the unknowns $x, y, z$ is always $2(x+y+z)$ or $2(x+y+z) \pm 2k$, and similarly for $a, b, c$.
+
+### [W3, round 1]
+Initial analysis of the query function Q(a, b, c):
+1. Case (0, 0, 0):
+   Q(0, 0, 0) = |x+y| + |y+z| + |z+x|. Since x, y, z >= 0, Q(0, 0, 0) = (x+y) + (y+z) + (z+x) = 2(x+y+z).
+   This query uniquely determines the sum S = x+y+z.
+
+2. Investigation of specific queries:
+   The objective of asking non-zero queries (e.g., (1, 0, 0)) is to force the arguments inside the absolute values to be positive or negative, thus removing the absolute value signs and generating a linear equation relating x, y, and z.
+   Example: Q(1, 0, 0) = |x+y-1| + |y+z| + |z+x-1|.
+   If we can assume signs (e.g., x+y >= 1 and z+x >= 1, which is likely given x,y,z >= 0), we get a linear relation:
+   Q(1, 0, 0) = (x+y-1) + (y+z) + (z+x-1) = 2(x+y+z) - 2 = 2S - 2.
+   This confirms that if the linear assumption holds, Q(1, 0, 0) gives no new information beyond Q(0, 0, 0).
+   We must explore queries that target specific differences or utilize the bounds (0 <= x, y, z <= 9) to force changes in the absolute value structure.
+
+Next step: Systematically test queries designed to isolate differences, potentially involving a mix of small integers like (1, 0, 0), (0, 1, 0), (1, 1, 0), etc., to see if we can establish three independent linear equations relating x, y, and z, independent of the absolute value structure.
+
+### [W1, round 2]
+[W1, round 2]
+**Computational Exploration for Domain {0, 1, 2, 3}**
+
+Tested the sufficiency of the pair of queries C1=(0, 0, 0) and C2=(1, 0, 0) to distinguish all $4^3=64$ possible triplets $(x, y, z)$.
+
+**Finding:** The pair of queries is *not* sufficient. Numerous collisions were found, meaning different input triplets yield the same pair of query results $(Q_1, Q_2)$.
+
+**Examples of Collisions:**
+1.  Q pair (2, 2) is generated by $\{(0, 0, 1), (0, 1, 0)\}$.
+2.  Q pair (6, 6) is generated by $\{(0, 0, 3), (0, 3, 0)\}$.
+3.  Q pair (4, 2) is generated by $\{(0, 1, 1), (1, 0, 1), (1, 1, 0), (2, 0, 0)\}$.
+
+Conclusion: The information gained from just these two queries is insufficient to uniquely determine $(x, y, z)$ even in this highly restricted domain. Further queries are required to break these collisions.
+
+### [W3, round 2]
+### [W3, round 2] Targeted Analysis of Q(1, 1, 0)
+
+We investigate $Q(1, 1, 0) = |x+y-2| + |y+z-1| + |z+x-1|$.
+We already know $Q(0, 0, 0) = 2(x+y+z) = 2S$.
+The structure of $Q(1, 1, 0)$ depends on the signs of $T_1=x+y-2$, $T_2=y+z-1$, and $T_3=z+x-1$.
+
+Let $\sigma_1, \sigma_2, \sigma_3 \in \{-1, 1\}$ be the signs. The resulting linear form is:
+$Q = x(\sigma_1 + \sigma_3) + y(\sigma_1 + \sigma_2) + z(\sigma_2 + \sigma_3) - (2\sigma_1 + \sigma_2 + \sigma_3)$.
+
+**Focus on isolating a variable:**
+We seek a configuration of signs where the coefficients of $x$ and $y$ (or any two variables) become zero.
+Setting $\sigma_1 + \sigma_3 = 0$ and $\sigma_1 + \sigma_2 = 0$ requires $\sigma_3 = -\sigma_1$ and $\sigma_2 = -\sigma_1$.
+This implies $\sigma_2 = \sigma_3$.
+
+Let's test the configuration $\sigma_1 = -1, \sigma_2 = 1, \sigma_3 = 1$.
+This requires the conditions:
+1. $T_1 < 0 \implies x+y < 2$. (This restricts $(x, y)$ to $(0, 0), (0, 1), (1, 0)$).
+2. $T_2 \ge 0 \implies y+z \ge 1$.
+3. $T_3 \ge 0 \implies z+x \ge 1$.
+
+If these conditions hold, the linear form simplifies to:
+$Q = x(-1+1) + y(-1+1) + z(1+1) - (2(-1) + 1 + 1)$
+$Q = 0x + 0y + 2z - (-2 + 2)$
+$Q = 2z$.
+
+**Conclusion of the targeted analysis:**
+By selecting the query $(1, 1, 0)$, Maria can exploit the constraints on $x$ and $y$ (i.e., $x+y < 2$) to force $Q(1, 1, 0)$ to become solely a function of $z$ (specifically, $Q(1, 1, 0) = 2z$), provided $z$ is large enough to satisfy the conditions on $T_2$ and $T_3$.
+
+If $x=0, y=1$, then $S=z+1$. $Q(0, 0, 0) = 2(z+1)$. The relationship $Q(1, 1, 0) = 2z$ yields $Q(1, 1, 0) = 2S - 2$.
+This demonstrates that the query $Q(1, 1, 0)$ can generate a linear relationship where the dependence on $x$ and $y$ drops out, achieving a higher level of structural separation than $Q(0, 0, 0)$ alone, which only gives $2S$. This is a necessary step towards solving the problem by isolating variables or finding differences.
+
+### [W2, round 2]
+### [W2, round 2] Targeted Algebraic Analysis of Q(1, 0, 0)
+
+The query is $Q(1, 0, 0) = |x+y-1| + |y+z| + |z+x-1|$.
+Let $T_1 = x+y-1$, $T_2 = y+z$, $T_3 = z+x-1$.
+Since $x, y, z \ge 0$, $T_2 = y+z \ge 0$ always holds, so $|T_2| = y+z$.
+We analyze the $2^2 = 4$ sign combinations based on $T_1$ and $T_3$.
+
+**Case 1: $T_1 \ge 0$ and $T_3 \ge 0$**
+1.  **Conditions:** $x+y-1 \ge 0$ (i.e., $x+y \ge 1$) AND $z+x-1 \ge 0$ (i.e., $z+x \ge 1$).
+2.  **Derivation:**
+    $Q = (x+y-1) + (y+z) + (z+x-1)$
+    $Q = 2x + 2y + 2z - 2$
+3.  **Resulting Linear Equation:** $2x + 2y + 2z = Q + 2$.
+4.  **Validity Condition:** $x+y \ge 1$ and $z+x \ge 1$.
+
+**Case 2: $T_1 \ge 0$ and $T_3 < 0$**
+1.  **Conditions:** $x+y-1 \ge 0$ (i.e., $x+y \ge 1$) AND $z+x-1 < 0$ (i.e., $z+x < 1$). Since $x, z$ are non-negative integers, $z+x < 1$ implies $x=0$ and $z=0$. Substituting $x=0, z=0$ into the first condition gives $y \ge 1$.
+2.  **Derivation:**
+    $Q = (x+y-1) - (z+x-1) + (y+z)$
+    $Q = (x+y-1) - (z+x-1) + (y+z)$
+    $Q = 2y$ (after substituting $x=0, z=0$).
+3.  **Resulting Linear Equation:** $2y = Q$.
+4.  **Validity Condition:** $x=0$, $z=0$, and $y \ge 1$.
+
+**Case 3: $T_1 < 0$ and $T_3 \ge 0$**
+1.  **Conditions:** $x+y-1 < 0$ (i.e., $x+y < 1$) AND $z+x-1 \ge 0$ (i.e., $z+x \ge 1$). Since $x, y$ are non-negative integers, $x+y < 1$ implies $x=0$ and $y=0$. Substituting $x=0, y=0$ into the second condition gives $z \ge 1$.
+2.  **Derivation:**
+    $Q = -(x+y-1) + (y+z) + (z+x-1)$
+    $Q = -(x+y-1) + (y+z) + (z+x-1)$
+    $Q = 2z$ (after substituting $x=0, y=0$).
+3.  **Resulting Linear Equation:** $2z = Q$.
+4.  **Validity Condition:** $x=0$, $y=0$, and $z \ge 1$.
+
+**Case 4: $T_1 < 0$ and $T_3 < 0$**
+1.  **Conditions:** $x+y-1 < 0$ (i.e., $x+y < 1$) AND $z+x-1 < 0$ (i.e., $z+x < 1$). This implies $x=0, y=0$ (from first) and $z=0$ (from second).
+2.  **Derivation:**
+    $Q = -(x+y-1) - (z+x-1) + (y+z)$
+    $Q = -x-y+1 - z-x+1 + y+z$
+    $Q = -2x + 2$ (after substituting $x=0, y=0, z=0$).
+3.  **Resulting Linear Equation:** $-2x + 2 = Q$.
+4.  **Validity Condition:** $x=0$, $y=0$, and $z=0$.
+
+### [W4, round 2]
+### [W4, round 2] Theoretical Minimum Additional Queries
+
+Based on the finding that $Q(0, 0, 0) = 2(x+y+z)$ uniquely determines the sum $S = x+y+z$, the problem reduces to finding the minimum number of additional queries needed to distinguish all triplets $(x, y, z)$ such that $x+y+z=S$, subject to $0 \le x, y, z \le 9$.
+
+1. **Determine Maximum Ambiguity ($N_{max}$):**
+The maximum number of states for a fixed sum $S$, $N(S)$, occurs when $S$ is approximately $3 \times 9 / 2 = 13.5$. We calculated $N(13) = 75$. This is the maximum number of states we must distinguish using subsequent queries.
+
+2. **Information Theory Bound:**
+Each additional query $Q_i$ yields an integer result $q_i$, where $0 \le q_i \le 54$. The total number of distinguishable states using $N_{add}$ queries is at most $55^{N_{add}}$. We require $55^{N_{add}} \ge N_{max}$.
+$$55^{N_{add}} \ge 75$$
+
+3. **Solving for $N_{add}$:**
+For $N_{add} = 1$: $55^1 = 55$. Since $55 < 75$, one query is insufficient.
+For $N_{add} = 2$: $55^2 = 3025$. Since $3025 \ge 75$, two queries are theoretically sufficient.
+
+Therefore, assuming maximal efficiency in query design, the minimum number of additional queries required is 2.

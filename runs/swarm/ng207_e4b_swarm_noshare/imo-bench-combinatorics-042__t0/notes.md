@@ -1,0 +1,15 @@
+### [W4, round 1]
+REPORT on task "Reframe the problem by counting quartets based on which edge is present. If a single edge e is present, derive an expression for the maximum number of such weak quartets that can be formed using e and": I reframed the problem by counting weak quartets based on a single edge $e=(u, v)$ contained within them. For such a quartet $\{u, v, x, y\}$ to be weak, $x$ and $y$ must be non-neighbors of both $u$ and $v$, and $x$ and $y$ must not be connected. I defined $k$ as the number of vertices in the network that are non-neighbors of both $u$ and $v$. Under the assumption that the subgraph induced by these $k$ vertices is an independent set (maximizing the count), the maximum number of weak quartets containing $e$ is $\binom{k}{2}$.
+Candidate answer: $$\max(N_{u, v}) = \binom{N - 2 - d(u) - d(v) + |N(u) \cap N(v)|}{2}$$
+
+### [W2, round 1]
+REPORT on task "Develop a general formula or an upper bound for the number of weak quartets in a network of N users, expressed in terms of the number of edges (k) or related graph parameters (e.g., average degree).": I developed a general formula for the number of weak quartets ($W$). The exact formula depends on the specific degree and neighborhood structure of the graph. However, the derived general upper bound, expressed in terms of $k$ (number of edges) and $N$ (number of users), is $W \le k \cdot \binom{N-2}{2}$. This bound assumes the lowest possible local density for every edge, which maximizes the available pool of unconnected vertices.
+Candidate answer: General Upper Bound: $W \le k \cdot \binom{N-2}{2}$
+
+### [W1, round 1]
+REPORT on task "Analyze the maximum number of weak quartets for small network sizes (N=4, 5, 6). Determine how the number of weak quartets depends on the number of edges (k) in these small cases.": I analyzed the maximum number of weak quartets for $N=4, 5,$ and $6$. In all cases, the maximum number of weak quartets is achieved when the friendships form a matching (i.e., the edges are mutually disjoint). For $N=4$, $W_{\max}=1$ when $k=1$. For $N=5$, $W_{\max}=4$ when $k=2$ disjoint edges are present. For $N=6$, $W_{\max}=18$ when $k=3$ disjoint edges are present. The number of weak quartets grows rapidly with $k$, provided $k$ is kept low enough to maintain the disjoint structure.
+Candidate answer: N=4: $W_{\max}=1$ (at $k=1$). N=5: $W_{\max}=4$ (at $k=2$, disjoint edges). N=6: $W_{\max}=18$ (at $k=3$, disjoint edges). In general, maximizing $W$ requires maximizing the number of disjoint edges.
+
+### [W3, round 1]
+REPORT on task "Attempt to construct a specific graph structure (e.g., a disjoint union of cliques, or a configuration minimizing high-degree vertices) that maximizes the number of weak quartets for N=120, and calcul": To maximize the number of weak quartets (4 vertices,exactly 1 edge), the graph was constructed as a perfect matching on 120 vertices (60 disjoint copies of K2). By counting the possible configurations:choosing one of the 60 edges
+Candidate answer: 410640

@@ -1,0 +1,164 @@
+{
+ "record": {
+  "id": "imo-bench-combinatorics-009",
+  "trial": 0,
+  "error": null,
+  "seconds": 592.1,
+  "n_cands": 4,
+  "verdicts": [
+   {
+    "label": "A",
+    "key": "('num', Fraction(95760, 1))",
+    "answer": "95760",
+    "result": "REFUTED",
+    "evidence": "The maximum number of pairs at distance 2 in a graph with 456 nodes is achieved by a star graph K_{1, 455}, which gives binom(455, 2) = 103285. Candidate A's value 95760 is smaller and does not correspond to any standard optimal structure.",
+    "via": "tool"
+   },
+   {
+    "label": "B",
+    "key": "('num', Fraction(103285, 1))",
+    "answer": "103285",
+    "result": "CONFIRMED",
+    "evidence": "The maximum number of pairs at distance 2 in a graph with 456 nodes is achieved by a star graph K_{1, 455}, giving binom(455, 2) = 103285. This matches candidate B.",
+    "via": "tool"
+   },
+   {
+    "label": "C",
+    "key": "('num', Fraction(98840, 1))",
+    "answer": "98840",
+    "result": "REFUTED",
+    "evidence": "The maximum possible number of such pairs for n=456 is 103285. Candidate C's value 98840 is less than this and does not correspond to the optimal star graph.",
+    "via": "tool"
+   },
+   {
+    "label": "D",
+    "key": "('num', Fraction(11828383, 1))",
+    "answer": "11828383",
+    "result": "REFUTED",
+    "evidence": "The maximum possible number of pairs among 456 people is binom(456, 2) = 103740. Candidate D's value 11828383 exceeds this total.",
+    "via": "tool"
+   }
+  ],
+  "status": "checked",
+  "steps": 5,
+  "calls": 5,
+  "prompt_tokens": 24739,
+  "completion_tokens": 6817,
+  "n_python": 1
+ },
+ "log": [
+  {
+   "agent": "CHECKER",
+   "round": 1,
+   "step": 0,
+   "finish": "tool_calls",
+   "completion_tokens": 1894,
+   "prompt_tokens": 665,
+   "reasoning_chars": 3731,
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "run_python",
+     "args": {
+      "code": "import networkx as nx\nfrom itertools import combinations, product\n\ndef count_dist_2_pairs(G):\n    count = 0\n    nodes = list(G.nodes())\n    for u, v in combinations(nodes, 2):\n        try:\n            if nx.shortest_path_length(G, source=u, target=v) == 2:\n                count += 1\n        except nx.NetworkXNoPath:\n            pass\n    return count\n\ndef max_dist_2_pairs(n):\n    max_pairs = 0\n    # We can't iterate over all graphs for n > 7. \n    # But we can try some common graph types.\n    # 1. Complete bipartite graphs\n    for m in range(1, n // 2 + 1):\n        G = nx.complete_bipartite_graph(m, n - m)\n        max_pairs = max(max_pairs, count_dist_2_pairs(G))\n    \n    # 2. Random graphs (this is a heuristic)\n    import random\n    for _ in range(1000):\n        # Try random number of edges\n        num_edges = random.randint(0, n * (n - 1) // 2)\n        G = nx.gnm_random_graph(n, num_edges)\n        max_pairs = max(max_pairs, count_dist_2_pairs(G))\n    \n    return max_pairs\n\nfor n in range(3, 11):\n    print(f\"n={n}, max_pairs={max_dist_2_pairs(n)}, star_pairs={ (n-1)*(n-2)//2 }\")\n"
+     },
+     "salvaged": false,
+     "result": "n=3, max_pairs=1, star_pairs=1\nn=4, max_pairs=3, star_pairs=3\nn=5, max_pairs=6, star_pairs=6\nn=6, max_pairs=10, star_pairs=10\nn=7, max_pairs=15, star_pairs=15\nn=8, max_pairs=21, star_pairs=21\nn=9, max_pairs=28, star_pairs=28\nn=10, max_pairs=36, star_pairs=36"
+    }
+   ],
+   "reasoning_excerpt": "*   Total participants: $n = 456$.\n    *   Friendships are represented by an undirected graph $G = (V, E)$.\n    *   We want to maximize the number of pairs $(u, v)$ such that $u$ and $v$ are NOT friends ($uv \\notin E$), but they have a common friend $w$ (there exists $w$ such that $uw \\in E$ and $vw \\in E$).\n    *   In graph theory terms, this is the number of pairs $(u, v)$ such that the distance $d(u, v) = 2$.\n    *   Let $N(u)$ be the set of neighbors of $u$. The number of pairs with a common neighbor is $\\sum_{w \\in V} \\binom{d(w)}{2}$ if we count each pair multiple times.\n    *   Wait, the problem asks for the number of *pairs* $\\{u, v\\}$ such that $u$ and $v$ are not friends but have a common friend.\n    *   Let $S$ be the set of pairs $\\{u, v\\}$ such that $u \\neq v$ and $d(u, v) = 2$.\n    *   We want to maximize $|S|$.\n\n    *   $n = 456$.\n    *   Let $G$ be the friendship graph.\n    *   $S = \\{ \\{u, v\\} : d(u, v) = 2 \\}$.\n    *   $|S| = |\\{ \\{u, v\\} : d(u, v) \\le 2 \\}| - |\\{ \\{u, v\\} : d(u, v) = 1 \\}|$.\n    *   Wait, let's rephrase: for each pair $(u, v)$, they are \"not friends but have a common friend\" if they are not connected by an edge but share a common neighbor.\n    *  [...]  *   What if the graph is a star $K_{1, n-1}$?\n        - Center $c$, leaves $l_1, \\dots, l_{n-1}$.\n        - $d(c, l_i) = 1$.\n        - $d(l_i, l_j) = 2$.\n        - Number of pairs at distance 2 is $\\binom{n-1}{2} = \\frac{(n-1)(n-2)}{2}$.\n        - For $n=456$, $\\binom{455}{2} = \\frac{455 \\times 454}{2} = 455 \\times 227 = 103285$.\n\n    *   Can we do better than $\\binom{n-1}{2}$?\n    *   Let $n=5$. $\\binom{4}{2} = 6$.\n        - Try a different structure.\n        - Let the graph be $K_{m, n-m}$. $\\binom{m}{2} + \\binom{n-m}{2}$. For $n=5$, $m=1 \\Rightarrow 6$, $m=2 \\Rightarrow 1+3=4$.\n        - Try $C_5$. $d(1,2)=1, d(1,3)=2, d(1,4)=2, d(1,5)=1$.\n          Distance 2 pairs: (1,3), (2,4), (3,5), (4,1), (5,2). Total 5.\n        - Try $P_5$. Edges (1,2), (2,3), (3,4), (4,5).\n          Distance 2 pairs: (1,3), (2,4), (3,5). Total 3.\n    *   Is there a graph where more than $\\binom{n-1}{2}$ pairs are at distance 2?\n        - If $n=4$, $\\binom{3}{2} = 3$. The graph $K_{1,3}$ gives 3.\n        - Let's test small $n$ using Python to find the maximum number of pairs at distance 2.\n\n    *   Write a script to find the maximum number of pairs $(u, v)$ such that $d(u, v) = 2$ for $n$ up to, say, 10."
+  },
+  {
+   "agent": "CHECKER",
+   "round": 1,
+   "step": 1,
+   "finish": "tool_calls",
+   "completion_tokens": 3836,
+   "prompt_tokens": 2713,
+   "reasoning_chars": 9246,
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "verdict",
+     "args": {
+      "candidate": "A",
+      "evidence": "The maximum number of pairs at distance 2 in a graph with 456 nodes is achieved by a star graph K_{1, 455}, which gives binom(455, 2) = 103285. Candidate A's value 95760 is smaller and does not correspond to any standard optimal structure.",
+      "result": "REFUTED"
+     },
+     "salvaged": false,
+     "result": "Recorded. Still to judge: B, C, D."
+    }
+   ],
+   "reasoning_excerpt": "Wait, the star graph $K_{1, n-1}$ seems to be optimal so far. Let's think if any other graph could be better.\nWhat if we have a graph where many pairs have distance 2?\nIn $K_{1, n-1}$, the only pairs *not* at distance 2 are:\n- Pairs $(c, l_i)$ (distance 1). Total $n-1$.\n- The pair $(c, c)$ (distance 0). Total 1.\nTotal pairs: $n(n-1)/2$.\nPairs at distance 2: $n(n-1)/2 - (n-1) = (n-1)(n/2 - 1) = (n-1)(n-2)/2$.\nWait, for $n=456$, $(455 * 454) / 2 = 103285$.\nThis is exactly candidate B.\n\nWait, what if we have something like a graph with a very small diameter?\nIf we have a graph where every pair is at distance 1 or 2.\nThen the number of pairs at distance 2 is $\\binom{n}{2} - |E|$.\nTo maximize this, we want to minimize $|E|$ while keeping the diameter $\\le 2$.\nWhat is the minimum number of edges in a graph with diameter 2?\nThe star graph $K_{1, n-1}$ has $n-1$ edges and diameter 2.\nIf we have fewer than $n-1$ edges, the graph is not connected, so diameter is $\\infty$.\nSo for a connected graph, the minimum number of edges is $n-1$ (a tree).\nAmong trees, which one has the maximum number of pairs at distance 2?\nIn a tree, the distance between any two nodes is the length of the unique path b [...] ds, we don't count them.\nSo the number of pairs is:\n$| \\{ \\{u, v\\} : u, v \\notin E, c(u, v) \\ge 1 \\} |$.\nThis is equal to $\\sum_{u < v, u, v \\notin E} [c(u, v) \\ge 1]$.\nThis is certainly $\\le \\sum_{u < v} [c(u, v) \\ge 1] \\le \\binom{n}{2}$.\nAnd we already know that for the star graph, the value is $\\binom{n-1}{2} = 103285$.\nFor any graph, the number of pairs at distance 2 is $\\binom{n}{2} - |E| - |\\{ \\{u, v\\} : d(u, v) \\ge 3 \\text{ or } d(u, v) = \\infty \\}|$.\nTo maximize this, we want $|E|$ to be small and the number of pairs at distance $\\ge 3$ to be small.\nFor a connected graph, $|E| \\ge n-1$.\nIf $|E| = n-1$, the graph is a tree.\nIn a tree, $d(u, v) \\ge 3$ for any pair that doesn't share a neighbor.\nWait, in a star graph, all pairs are at distance 1 or 2.\nSo $|E| = n-1$ and the number of pairs at distance $\\ge 3$ is 0.\nThis gives $\\binom{n}{2} - (n-1) = \\binom{n-1}{2}$.\nCan we have $|E| < n-1$? Then the graph is disconnected.\nIf the graph has components of size $n_1, n_2, \\dots, n_k$, the number of pairs at distance 2 is $\\sum \\text{pairs at distance 2 in } C_i$.\nAs we saw, this is $\\le \\sum \\binom{n_i-1}{2} \\le \\binom{n-1}{2}$.\n\nSo the maximum is indeed $\\binom{455}{2} = 103285$."
+  },
+  {
+   "agent": "CHECKER",
+   "round": 1,
+   "step": 2,
+   "finish": "tool_calls",
+   "completion_tokens": 609,
+   "prompt_tokens": 6575,
+   "reasoning_chars": 1607,
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "verdict",
+     "args": {
+      "candidate": "B",
+      "evidence": "The maximum number of pairs at distance 2 in a graph with 456 nodes is achieved by a star graph K_{1, 455}, giving binom(455, 2) = 103285. This matches candidate B.",
+      "result": "CONFIRMED"
+     },
+     "salvaged": false,
+     "result": "Recorded. Still to judge: C, D."
+    }
+   ],
+   "reasoning_excerpt": "Wait, just to be absolutely sure, could there be a graph with diameter 2 and *fewer* than $n-1$ edges?\nNo, a graph with diameter 2 must be connected. A connected graph must have at least $n-1$ edges.\nCould there be a graph with diameter 2 and $n-1$ edges that is not a star?\nYes, any tree with diameter 2. But a tree with diameter 2 is *exactly* a star.\nProof: In a tree, if the diameter is 2, there is a node $c$ such that every other node is at distance at most 1 from $c$ (since $c$ must be the center of the diameter path). So all other nodes are neighbors of $c$. This is a star.\nWhat if we have a graph with diameter 3?\nThen some pairs are at distance 3, so they don't contribute to the count.\nWhat if we have a graph with more edges?\nAdding an edge to a star graph $K_{1, n-1}$ only *decreases* the number of pairs at distance 2, because it turns a pair at distance 2 into a pair at distance 1.\nWait, what if adding an edge allows us to reduce the number of pairs at distance $\\ge 3$?\nBut in a star graph, there are NO pairs at distance $\\ge 3$.\nSo adding edges will always decrease the count.\nThe only way to increase the count would be to decrease $|E|$, but $|E| \\ge n-1$ for connected graphs, and for disconnected graphs, we already showed the sum of $\\binom{n_i-1}{2}$ is maximized when one component is a star and others are isolated vertices.\n\nFinal confirmation of the calculation:\n$\\binom{455}{2} = \\frac{455 \\times 454}{2} = 455 \\times 227$.\n$455 \\times 200 = 91000$.\n$455 \\times 20 = 9100$.\n$455 \\times 7 = 3185$.\n$91000 + 9100 + 3185 = 100100 + 3185 = 103285$.\nThe calculation is correct."
+  },
+  {
+   "agent": "CHECKER",
+   "round": 1,
+   "step": 3,
+   "finish": "tool_calls",
+   "completion_tokens": 348,
+   "prompt_tokens": 7208,
+   "reasoning_chars": 667,
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "verdict",
+     "args": {
+      "candidate": "C",
+      "evidence": "The maximum possible number of such pairs for n=456 is 103285. Candidate C's value 98840 is less than this and does not correspond to the optimal star graph.",
+      "result": "REFUTED"
+     },
+     "salvaged": false,
+     "result": "Recorded. Still to judge: D."
+    }
+   ],
+   "reasoning_excerpt": "Candidate C: 98840.\nWe already checked that it's not $\\binom{n-1}{2}$ and it's not $\\binom{m}{2} + \\binom{n-m}{2}$.\nSince the maximum is 103285, C is not the maximum.\nWait, I should double check if C is the maximum for some other interpretation.\nWhat if $n=456$ but we are looking for something else?\n\"pairs for which the two are not friends but have a common friend\"\nIf the graph was a $K_{m, n-m}$ and we want to maximize $\\binom{m}{2} + \\binom{n-m}{2}$, we'd pick $m=1$ or $m=n-1$.\nIf we wanted to *minimize* it, we'd pick $m = n/2 = 228$.\n$\\binom{228}{2} + \\binom{228}{2} = 2 \\times \\frac{228 \\times 227}{2} = 228 \\times 227 = 51756$.\nNone of this leads to 98840."
+  },
+  {
+   "agent": "CHECKER",
+   "round": 1,
+   "step": 4,
+   "finish": "tool_calls",
+   "completion_tokens": 130,
+   "prompt_tokens": 7578,
+   "reasoning_chars": 105,
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "verdict",
+     "args": {
+      "candidate": "D",
+      "evidence": "The maximum possible number of pairs among 456 people is binom(456, 2) = 103740. Candidate D's value 11828383 exceeds this total.",
+      "result": "REFUTED"
+     },
+     "salvaged": false,
+     "result": "Recorded. Still to judge: nothing."
+    }
+   ],
+   "reasoning_excerpt": "Candidate D: 11828383.\n$\\binom{456}{2} = 103740$.\n11828383 is much larger than the total number of pairs."
+  }
+ ]
+}

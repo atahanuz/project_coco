@@ -1,0 +1,15 @@
+### [W2, round 1]
+REPORT on task "Model the sequence as a vector in {0, 1}^N. Determine the theoretical maximum number of known coordinates (s) given one revealed coordinate, focusing on guaranteed recovery regardless of the initial s": The problem requires finding the maximum number $s$ of sequence members Bình can guarantee to guess correctly, regardless of the initial sequence, given only one revealed coordinate $(K, X_K)$. Since the sequence is otherwise arbitrary (any $0/1$ sequence is possible, constrained only by $X_K$), the value of any coordinate $X_i$ where $i \neq K$ is undetermined by the revealed information. If Bình picks any index $i \neq K$, there exist two valid sequences, one where $X_i=0$ and one where $X_i=1$, leading to a potential failure of the guess. Therefore, the only coordinate Bình can guarantee to guess correctly is the one that An revealed. The maximum guaranteed number is $s=1$.
+Candidate answer: 1
+
+### [W4, round 1]
+REPORT on task "Derive an upper bound for s based purely on the information provided (1 bit revealed) and the total length N, considering the requirement that the guess must be guaranteed for *any* possible sequence.": The largest number s for which a guaranteed guess is possible is s=1. Since only one bit of information is provided (the value of $S_i$), only the value $S_i$ itself is fixed across all possible sequences. For any other index $j \neq i$, we can construct two valid sequences consistent with the revealed information that differ at position $j$, meaning the value at $j$ is not guaranteed. Thus, $s$ cannot exceed 1.
+Candidate answer: 1
+
+### [W1, round 1]
+REPORT on task "Analyze the problem for small lengths N=4 and N=8. Determine the largest guaranteed number s for these cases, assuming optimal pre-game strategy.": The guaranteed number $s$ must hold for all sequences consistent with the single piece of information revealed by An. Since the sequence is otherwise unknown and arbitrary, revealing one element only fixes that element. For $N=4$ and $N=8$, the remaining $N-1$ elements are independent free variables, meaning their values can be 0 or 1 depending on the actual sequence, thus precluding any guaranteed guess beyond the revealed element itself. Therefore, $s=1$ for both cases.
+Candidate answer: N=4: s=1, N=8: s=1
+
+### [W3, round 1]
+REPORT on task "Focus on the game strategy. If the sequence is chosen from a specific subspace (e.g., a linear code), how does this affect the guaranteed number s? Explore optimal error-correcting codes for this scen": The problem was reframed in the context of constraint propagation within a linear code $C \subset \mathbb{F}_2^{4096}$. The guaranteed number $s$ is maximized when the code structure is maximally rigid, ensuring that knowing one bit $X_i$ uniquely determines many others. This condition is best met by choosing a code that closely approximates the Maximum Distance Separable (MDS) property, as MDS codes provide the tightest structural dependencies among coordinates, thus maximizing the information gain from a single known bit.
+Candidate answer: N/A (Qualitative Analysis)

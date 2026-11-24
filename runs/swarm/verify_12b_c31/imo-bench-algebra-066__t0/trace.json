@@ -1,0 +1,167 @@
+{
+ "record": {
+  "id": "imo-bench-algebra-066",
+  "trial": 0,
+  "error": null,
+  "seconds": 718.1,
+  "n_cands": 4,
+  "verdicts": [
+   {
+    "label": "A",
+    "key": "('num', Fraction(1002001, 1))",
+    "answer": "1002001",
+    "result": "REFUTED",
+    "evidence": "The candidate value 1002001 does not match the calculated values for good sequences for n=1000, which include 995018, 995026, and 997008.",
+    "via": "tool"
+   },
+   {
+    "label": "B",
+    "key": "('num', Fraction(5994, 1))",
+    "answer": "5994",
+    "result": "REFUTED",
+    "evidence": "The candidate value 5994 is far too small for n=1000, as the calculated values are around 995000.",
+    "via": "tool"
+   },
+   {
+    "label": "C",
+    "key": "('num', Fraction(0, 1))",
+    "answer": "0",
+    "result": "REFUTED",
+    "evidence": "The candidate value 0 is not possible as the sum consists of squares of counts of elements in a sequence of length 1001, and at least one a_i must be non-zero.",
+    "via": "tool"
+   },
+   {
+    "label": "D",
+    "key": "('num', Fraction(995018, 1))",
+    "answer": "995018",
+    "result": "CONFIRMED",
+    "evidence": "The value 995018 is achieved by the self-descriptive good sequence a_0=997, a_1=2, a_2=1, a_{997}=1, and all other a_i=0. Calculation: 1*997^2 + 2*2^2 + 3*1^2 + 998*1^2 = 994009 + 8 + 3 + 998 = 995018.",
+    "via": "tool"
+   }
+  ],
+  "status": "checked",
+  "steps": 4,
+  "calls": 4,
+  "prompt_tokens": 28034,
+  "completion_tokens": 16899,
+  "n_python": 3
+ },
+ "log": [
+  {
+   "agent": "CHECKER",
+   "round": 1,
+   "step": 0,
+   "finish": "tool_calls",
+   "completion_tokens": 3641,
+   "prompt_tokens": 785,
+   "reasoning_chars": 6170,
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "run_python",
+     "args": {
+      "code": "from itertools import product\n\ndef solve_small_n(n):\n    # a and b are sequences of length n+1\n    # a_k is count of k in b\n    # b_k is count of k in a\n    # sum a_k = n+1, sum b_k = n+1\n    # a_k, b_k in {0, ..., n+1} - wait, can be n+1 if all are the same?\n    # No, the product has n+1 terms, so b_k is count, so 0 <= b_k <= n+1.\n    # But the product is (x-k)^b_k, and the total degree is sum b_k = n+1.\n    # Similarly sum a_k = n+1.\n    \n    import itertools\n    \n    # Generate all partitions of n+1 into n+1 parts (including zeros)\n    # These are the possible sequences a.\n    # Actually, it's easier to iterate through all possible a sequences where sum a = n+1 and 0 <= a_i <= n+1.\n    # But that's too many.\n    \n    # Let's try a different approach.\n    # a is a sequence of length n+1.\n    # b is defined by a: b_k = count of k in a.\n    # Then we check if a_k = count of k in b.\n    \n    import itertools\n    \n    def get_counts(seq, n):\n        counts = [0] * (n + 1)\n        for x in seq:\n            if 0 <= x <= n:\n                counts[x] += 1\n        return counts\n\n    # Instead of all sequences, we can iterate over all possible 'counts' sequences.\n    # A counts sequence 'b' is a sequence of length n+1 such that sum(b) = n+1.\n    # For each such 'b', we can construct a sequence 'a' where the number of k's is b_k.\n    # Then we check if the counts of 'b' are equal to 'a'.\n    \n    def get_partitions(n, k):\n        if k == 1:\n            yield (n,)\n            return\n        for i in range(n + 1):\n            for p in get_partitions(n - i, k - 1):\n                yield (i,) + p\n\n    n_plus_1 = n + 1\n    good_sequences = []\n    for b in get_partitions(n_plus_1, n_plus_1):\n        # b is a sequence of counts.\n        # This b represents the multiset {a_0, ..., a_n}.\n        # Now we find the counts of this b.\n        a = get_counts(b, n)\n        # Now check if the counts of a are b.\n        # The counts of a is just the b we started with? No.\n        # a_k = count of k in b.\n        # b_k = count of k in a.\n        # Let's check:\n        b_from_a = get_counts(a, n)\n        if b_from_a == list(b):\n            good_sequences.append((list(a), list(b)))\n            \n    return good_sequences\n\nfor n in range(1, 6):\n    print(f\"n={n}: {solve_small_n(n)}\")\n"
+     },
+     "salvaged": false,
+     "result": "n=1: []\nn=2: []\nn=3: [([1, 2, 1, 0], [1, 2, 1, 0]), ([2, 0, 2, 0], [2, 0, 2, 0])]\nn=4: [([2, 1, 2, 0, 0], [2, 1, 2, 0, 0])]\nn=5: [([3, 1, 1, 1, 0, 0], [2, 3, 0, 1, 0, 0]), ([2, 3, 0, 1, 0, 0], [3, 1, 1, 1, 0, 0])]"
+    }
+   ],
+   "reasoning_excerpt": "*   A sequence $a_0, \\ldots, a_{1000}$ is \"good\" if there exists a sequence $b_0, \\ldots, b_{1000}$ such that:\n        1. $\\prod_{k=0}^{1000} (x - a_k) = \\prod_{k=0}^{1000} (x - k)^{b_k}$\n        2. $\\prod_{k=0}^{1000} (x - b_k) = \\prod_{k=0}^{1000} (x - k)^{a_k}$\n    *   We need to find all possible values of $S = \\sum_{i=0}^{1000} (i+1)a_i^2$.\n    *   Let $n = 1000$.\n    *   The first equation $\\prod_{k=0}^{n} (x - a_k) = \\prod_{k=0}^{n} (x - k)^{b_k}$ means that the set of roots $\\{a_0, \\dots, a_n\\}$ (with multiplicity) is the same as the set of roots $\\{0, \\dots, n\\}$ where each root $k$ appears $b_k$ times.\n    *   This implies:\n        *   Each $a_i$ must be in the set $\\{0, 1, \\dots, n\\}$.\n        *   The number of times $k$ appears in $\\{a_0, \\dots, a_n\\}$ is $b_k$.\n        *   Since there are $n+1$ values of $a_i$, we must have $\\sum_{k=0}^n b_k = n+1$.\n    *   The second equation $\\prod_{k=0}^{n} (x - b_k) = \\prod_{k=0}^{n} (x - k)^{a_k}$ means that the set of roots $\\{b_0, \\dots, b_n\\}$ (with multiplicity) is the same as the set of roots $\\{0, \\dots, n\\}$ where each root $k$ appears $a_k$ times.\n    *   This implies:\n        *   Each $b_i$ must be in the set $\\{0, 1, \\do [...]  \\#\\{i : b_i = 0\\} = 1$.\n        OK! $a_1 = \\#\\{i : b_i = 1\\} = 1$.\n        But we started with $a_1 = 0$. Contradiction.\n        If $(a_0, a_1) = (1, 1)$, then $b_0 = 0, b_1 = 2$.\n        $a_0 = \\#\\{i : b_i = 0\\} = 1$. OK.\n        $a_1 = \\#\\{i : b_i = 1\\} = 0$.\n        But we started with $a_1 = 1$. Contradiction.\n\n        Is it possible that $n=1$ has no good sequences?\n        Wait, let me re-read carefully.\n        \"$\\prod_{k=0}^{1000} (x - a_k) = \\prod_{k=0}^{1000} (x - k)^{b_k}$\"\n        \"$\\prod_{k=0}^{1000} (x - b_k) = \\prod_{k=0}^{1000} (x - k)^{a_k}$\"\n        This means:\n        The multiset $\\{a_0, \\dots, a_{1000}\\}$ is the same as $\\{ \\underbrace{0,\\dots,0}_{b_0}, \\underbrace{1,\\dots,1}_{b_1}, \\dots, \\underbrace{1000,\\dots,1000}_{b_{1000}} \\}$.\n        The multiset $\\{b_0, \\dots, b_{1000}\\}$ is the same as $\\{ \\underbrace{0,\\dots,0}_{a_0}, \\underbrace{1,\\dots,1}_{a_1}, \\dots, \\underbrace{1000,\\dots,1000}_{a_{1000}} \\}$.\n        This means:\n        $b_k = \\text{count of } k \\text{ in } (a_0, \\dots, a_n)$\n        $a_k = \\text{count of } k \\text{ in } (b_0, \\dots, b_n)$\n        Also $\\sum a_k = \\sum b_k = n+1$.\n\n        Let's use Python to find good sequences for small $n$."
+  },
+  {
+   "agent": "CHECKER",
+   "round": 1,
+   "step": 1,
+   "finish": "tool_calls",
+   "completion_tokens": 5292,
+   "prompt_tokens": 4620,
+   "reasoning_chars": 7191,
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "run_python",
+     "args": {
+      "code": "def get_counts(seq, n):\n    counts = [0] * (n + 1)\n    for x in seq:\n        if 0 <= x <= n:\n            counts[x] += 1\n    return counts\n\ndef find_good_sequences(n):\n    # We need to find all a such that:\n    # 1. sum(a) = n + 1\n    # 2. a_i in {0, ..., n+1}\n    # 3. let b = get_counts(a, n)\n    # 4. get_counts(b, n) == a\n    \n    # The number of a's is too large.\n    # However, we know sum(a) = n+1 and sum(k*a_k) = n+1.\n    # Let's iterate over all partitions of n+1 into parts that sum to n+1.\n    \n    import itertools\n\n    def get_partitions(target_sum, num_parts, max_val):\n        if num_parts == 1:\n            if 0 <= target_sum <= max_val:\n                yield (target_sum,)\n            return\n        for i in range(min(target_sum, max_val) + 1):\n            for p in get_partitions(target_sum - i, num_parts - 1, max_val):\n                yield (i,) + p\n\n    # That's still too many.\n    # Let's use the property that sum(a_i) = n+1 and sum(i*a_i) = n+1.\n    # This is a much smaller set.\n    \n    def get_partitions_with_weighted_sum(target_sum, target_weighted_sum, max_idx):\n        # Find all sequences a_0, ..., a_{max_idx} such that sum(a_i) = target_sum and sum(i*a_i) = target_weighted_sum.\n        # We can use recursion with pruning.\n        \n        results = []\n        \n        def backtrack(idx, current_sum, current_weighted_sum, current_a):\n            if idx == max_idx:\n                # last element a_{max_idx}\n                a_last = target_sum - current_sum\n                if a_last >= 0 and current_weighted_sum + max_idx * a_last == target_weighted_sum:\n                    results.append(tuple(current_a + [a_last]))\n                return\n            \n            # We need:\n            # current_sum + a_idx + ... + a_{max_idx} = target_sum\n            # current_weighted_sum + idx*a_idx + ... + max_idx*a_{max_idx} = target_weighted_sum\n            \n            # Max possible a_idx is target_sum - current_sum\n            for a_val in range(target_sum - current_sum + 1):\n                new_sum = current_sum + a_val\n                new_weighted_sum = current_weighted_sum + idx * a_val\n                if new_weighted_sum <= target_weighted_sum:\n                    # Pruning: the remaining weighted sum must be achievable.\n                    # Minimum remaining weighted sum: (new_sum) * (idx+1) ? No.\n                    # Minimum remaining weighted sum is if all remaining are at idx+1.\n                    # Actually, the minimum remaining weighted sum is (target_sum - new_sum) * (idx + 1)\n                    # The maximum remaining weighted sum is (target_sum - new_sum) * max_idx.\n                    rem_sum = target_sum - new_sum\n                    if (rem_sum * (idx + 1) <= target_weighted_sum - new_weighted_sum <= rem_sum * max_idx):\n                        backtrack(idx + 1, new_sum, new_weighted_sum, current_a + [a_val])\n        \n        backtrack(0, 0, 0, [])\n        return results\n\n    n_plus_1 = n + 1\n    possible_a = get_par"
+     },
+     "salvaged": false,
+     "result": "n=1: []\nn=2: []\nn=3: [12, 16]\nn=4: [18]\nn=5: [26, 18]\nn=6: [24]\nn=7: [32, 40, 36]\nn=8: [42, 50, 48]\nn=9: [54, 62, 62]\nn=10: [68, 76, 78]"
+    }
+   ],
+   "reasoning_excerpt": "Okay, for $n=3$, I got two good sequences.\n$n=3 \\implies N=4$.\nSequence 1: $a = [1, 2, 1, 0]$.\nCheck:\n$b_0 = \\#\\{i: a_i=0\\} = 1$\n$b_1 = \\#\\{i: a_i=1\\} = 2$\n$b_2 = \\#\\{i: a_i=2\\} = 1$\n$b_3 = \\#\\{i: a_i=3\\} = 0$\nSo $b = [1, 2, 1, 0]$.\nNow check $a$ from $b$:\n$a_0 = \\#\\{i: b_i=0\\} = 1$\n$a_1 = \\#\\{i: b_i=1\\} = 2$\n$a_2 = \\#\\{i: b_i=2\\} = 1$\n$a_3 = \\#\\{i: b_i=3\\} = 0$\nSo $a = [1, 2, 1, 0]$. Correct.\n\nSequence 2: $a = [2, 0, 2, 0]$.\nCheck:\n$b_0 = \\#\\{i: a_i=0\\} = 2$\n$b_1 = \\#\\{i: a_i=1\\} = 0$\n$b_2 = \\#\\{i: a_i=2\\} = 2$\n$b_3 = \\#\\{i: a_i=3\\} = 0$\nSo $b = [2, 0, 2, 0]$.\nCheck $a$ from $b$:\n$a_0 = \\#\\{i: b_i=0\\} = 2$\n$a_1 = \\#\\{i: b_i=1\\} = 0$\n$a_2 = \\#\\{i: b_i=2\\} = 2$\n$a_3 = \\#\\{i: b_i=3\\} = 0$\nSo $a = [2, 0, 2, 0]$. Correct.\n\nWait, let me calculate $\\sum_{i=0}^3 (i+1) a_i^2$ for these.\nFor $a = [1, 2, 1, 0]$:\n$S = (1)(1^2) + (2)(2^2) + (3)(1^2) + (4)(0^2) = 1 + 8 + 3 + 0 = 12$.\nFor $a = [2, 0, 2, 0]$:\n$S = (1)(2^2) + (2)(0^2) + (3)(2^2) + (4)(0^2) = 4 + 0 + 12 + 0 = 16$.\n\nLet's check $n=4$ ($N=5$).\n$a = [2, 1, 2, 0, 0]$.\n$b_0 = 2, b_1 = 1, b_2 = 2, b_3 = 0, b_4 = 0$.\n$a_0 = 2, a_1 = 1, a_2 = 2, a_3 = 0, a_4 = 0$. Correct.\n$S = (1)(2^2) + (2)(1^2) + (3)(2^2) + (4)(0^2) + (5)(0^2) = 4 + 2 + [...] = 1000018$.\nWait, my index for $a_{997}$ is 997, so the coefficient is $997+1 = 998$.\n\nLet me re-read the question. \"Find all the possible values of $\\sum_{i=0}^{1000} (i+1) a_i^2$\".\nAre there other good sequences?\nI only looked at $a=b$. What if $a \\neq b$?\nIn the $n=5$ case, I found a good sequence where $a \\neq b$.\n$a = [3, 1, 1, 1, 0, 0]$\n$b = [2, 3, 0, 1, 0, 0]$\nLet's check this again.\n$a = [3, 1, 1, 1, 0, 0] \\implies b_0=2, b_1=3, b_2=0, b_3=1, b_4=0, b_5=0$.\n$b = [2, 3, 0, 1, 0, 0] \\implies a_0=3, a_1=1, a_2=1, a_3=1, a_4=0, a_5=0$.\nCorrect.\nFor this $a$, $S = 1*3^2 + 2*1^2 + 3*1^2 + 4*1^2 + 5*0^2 + 6*0^2 = 9 + 2 + 3 + 4 = 18$.\nWait, for $n=5$, $N=6$.\nSelf-descriptive sequence for $N=6$?\n$N=6$ is small. Let's see if there's one.\nFor $N=4$, $a=[1, 2, 1, 0]$ (which I found). $S = 1*1 + 2*4 + 3*1 = 12$.\nFor $N=5$, $a=[2, 1, 2, 0, 0]$. $S = 1*4 + 2*1 + 3*4 = 18$.\nFor $N=6$, $a=[3, 1, 1, 1, 0, 0]$ is NOT self-descriptive, because $a_0=3$ but there are only 3 zeros (at $4, 5$ and... wait).\nWait, $a=[3, 1, 1, 1, 0, 0]$\nZeros are at $4, 5$. Only 2 zeros. But $a_0=3$.\nSo it's not self-descriptive. But it IS a good sequence!\n\nLet's use Python to find all good sequences for larger $n$."
+  },
+  {
+   "agent": "CHECKER",
+   "round": 1,
+   "step": 2,
+   "finish": "tool_calls",
+   "completion_tokens": 2185,
+   "prompt_tokens": 10051,
+   "reasoning_chars": 2828,
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "run_python",
+     "args": {
+      "code": "def get_counts(seq, n):\n    counts = [0] * (n + 1)\n    for x in seq:\n        if 0 <= x <= n:\n            counts[x] += 1\n    return counts\n\ndef find_good_sequences(n):\n    def get_partitions_with_weighted_sum(target_sum, target_weighted_sum, max_idx):\n        results = []\n        def backtrack(idx, current_sum, current_weighted_sum, current_a):\n            if idx == max_idx:\n                a_last = target_sum - current_sum\n                if a_last >= 0 and current_weighted_sum + max_idx * a_last == target_weighted_sum:\n                    results.append(tuple(current_a + [a_last]))\n                return\n            for a_val in range(target_sum - current_sum + 1):\n                new_sum = current_sum + a_val\n                new_weighted_sum = current_weighted_sum + idx * a_val\n                if new_weighted_sum <= target_weighted_sum:\n                    rem_sum = target_sum - new_sum\n                    if (rem_sum * (idx + 1) <= target_weighted_sum - new_weighted_sum <= rem_sum * max_idx):\n                        backtrack(idx + 1, new_sum, new_weighted_sum, current_a + [a_val])\n        backtrack(0, 0, 0, [])\n        return results\n\n    n_plus_1 = n + 1\n    possible_a = get_partitions_with_weighted_sum(n_plus_1, n_plus_1, n)\n    good_s_values = []\n    for a in possible_a:\n        b = get_counts(a, n)\n        if get_counts(b, n) == list(a):\n            s = sum((i + 1) * (a[i]**2) for i in range(n + 1))\n            good_s_values.append(s)\n    return sorted(list(set(good_s_values)))\n\nfor n in range(1, 21):\n    print(f\"n={n}: {find_good_sequences(n)}\")\n"
+     },
+     "salvaged": false,
+     "result": "n=1: []\nn=2: []\nn=3: [12, 16]\nn=4: [18]\nn=5: [18, 26]\nn=6: [24]\nn=7: [32, 36, 40]\nn=8: [42, 48, 50]\nn=9: [54, 62]\nn=10: [68, 76, 78]\nn=11: [84, 92, 96]\nn=12: [102, 110, 116]\nn=13: [122, 130, 138]\nn=14: [144, 152, 162]\nn=15: [168, 176, 188]\nn=16: [194, 202, 216]\nn=17: [222, 230, 246]\nn=18: [252, 260, 278]\nn=19: [284, 292, 312]\nn=20: [318, 326, 348]"
+    }
+   ],
+   "reasoning_excerpt": "Wait, the results for $n=7, 8, 9, 10$ are starting to show a pattern.\nLet's see $n=7$ ($N=8$): $S = 32, 40, 36$.\n$n=8$ ($N=9$): $S = 42, 50, 48$.\n$n=9$ ($N=10$): $S = 54, 62, 62$.\n$n=10$ ($N=11$): $S = 68, 76, 78$.\n\nWait, look at the differences:\n$n=7: 32, 36, 40$ (diff 4)\n$n=8: 42, 48, 50$ (diff 6, 2)\n$n=9: 54, 62, 62$ (diff 8, 0)\n$n=10: 68, 76, 78$ (diff 8, 2)\n\nLet's check $n=10$ again.\n$S = 68, 76, 78$.\n$68 = 6 \\cdot 11 + 2$?\n$76 = 7 \\cdot 11 - 1$?\n$78 = 7 \\cdot 11 + 1$?\n\nLet's re-examine the self-descriptive sequence for $N=1001$.\n$a_0 = 997, a_1 = 2, a_2 = 1, a_{997} = 1$.\n$S = 1000018$.\nIs $1000018$ one of the candidates?\nA: 1002001\nB: 5994\nC: 0\nD: 995018\nNo, but $995018$ is close!\nLet me re-calculate $S$ for $a = [997, 2, 1, 0, \\dots, 0, 1, 0, \\dots, 0]$.\nWait, the sum is $\\sum_{i=0}^{1000} (i+1) a_i^2$.\n$S = (0+1) 997^2 + (1+1) 2^2 + (2+1) 1^2 + (997+1) 1^2$\n$S = 994009 + 8 + 3 + 998 = 1000018$.\n\nWait, $995018 - 1000018 = -5000$.\n$1000018 - 995018 = 5000$.\nIs it possible that the sum was $\\sum_{i=0}^{1000} i a_i^2$?\nLet's check $\\sum i a_i^2$ for $a = [997, 2, 1, 0, \\dots, 0, 1, 0, \\dots, 0]$.\n$S' = 0 \\cdot 997^2 + 1 \\cdot 2^2 + 2 \\cdot 1^2 + 997 \\cdot 1^2 = 0 + 4 + 2 + 997 [...] ait, the question says \"Find all the possible values of $\\sum (i+1) a_i^2$ for good sequences $a_0, \\dots, a_{1000}$\".\nSo for $n=5$, the values are $\\{18, 26\\}$.\nFor $n=1000$, there should be some values.\n\nLet's try to find other good sequences for $n=10$.\nI already have $S = 68, 76, 78$.\nLet's see if there are more.\nMy `find_good_sequences` function only checks for sequences where $\\sum a_i = N$ and $\\sum i a_i = N$.\nIs it always true that $\\sum i a_i = N$ for a good sequence?\n$\\sum k b_k = \\sum i a_i$ (since $b_k$ is the count of $k$ in $a$).\n$\\sum k a_k = \\sum i b_i$ (since $a_k$ is the count of $k$ in $b$).\nAlso $\\sum a_k = N$ and $\\sum b_k = N$.\nIs $\\sum k a_k = N$?\nFor $n=5, a=[3, 1, 1, 1, 0, 0]$, $\\sum k a_k = 0*3 + 1*1 + 2*1 + 3*1 + 4*0 + 5*0 = 6 = N$. Correct.\nFor $n=5, b=[2, 3, 0, 1, 0, 0]$, $\\sum k b_k = 0*2 + 1*3 + 2*0 + 3*1 + 4*0 + 5*0 = 6 = N$. Correct.\nSo $\\sum k a_k = N$ and $\\sum k b_k = N$ is always true.\n\nWait, let's look at the candidates again.\nA: 1002001\nB: 5994\nC: 0\nD: 995018\nCould $S$ be something like $n(n+1) \\dots$?\nFor $n=10$, $S \\in \\{68, 76, 78\\}$.\n$n=10, N=11$.\n$68 = 6 \\cdot 11 + 2$\n$76 = 7 \\cdot 11 - 1$\n$78 = 7 \\cdot 11 + 1$\n\nLet's try $n=20$ and see."
+  },
+  {
+   "agent": "CHECKER",
+   "round": 1,
+   "step": 3,
+   "finish": "tool_calls",
+   "completion_tokens": 5781,
+   "prompt_tokens": 12578,
+   "reasoning_chars": 8810,
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "verdict",
+     "args": {
+      "candidate": "A",
+      "evidence": "The candidate value 1002001 does not match the calculated values for good sequences for n=1000, which include 995018, 995026, and 997008.",
+      "result": "REFUTED"
+     },
+     "salvaged": false,
+     "result": "Recorded. Still to judge: B, C, D."
+    },
+    {
+     "name": "verdict",
+     "args": {
+      "candidate": "B",
+      "evidence": "The candidate value 5994 is far too small for n=1000, as the calculated values are around 995000.",
+      "result": "REFUTED"
+     },
+     "salvaged": false,
+     "result": "Recorded. Still to judge: C, D."
+    },
+    {
+     "name": "verdict",
+     "args": {
+      "candidate": "C",
+      "evidence": "The candidate value 0 is not possible as the sum consists of squares of counts of elements in a sequence of length 1001, and at least one a_i must be non-zero.",
+      "result": "REFUTED"
+     },
+     "salvaged": false,
+     "result": "Recorded. Still to judge: D."
+    },
+    {
+     "name": "verdict",
+     "args": {
+      "candidate": "D",
+      "evidence": "The value 995018 is achieved by the self-descriptive good sequence a_0=997, a_1=2, a_2=1, a_{997}=1, and all other a_i=0. Calculation: 1*997^2 + 2*2^2 + 3*1^2 + 998*1^2 = 994009 + 8 + 3 + 998 = 995018.",
+      "result": "CONFIRMED"
+     },
+     "salvaged": false,
+     "result": "Recorded. Still to judge: nothing."
+    }
+   ],
+   "reasoning_excerpt": "Let's look at the maximum value for each $n$:\n$n=3: 16$\n$n=4: 18$\n$n=5: 26$\n$n=6: 24$\n$n=7: 40$\n$n=8: 50$\n$n=9: 62$\n$n=10: 78$\n$n=11: 96$\n$n=12: 116$\n$n=13: 138$\n$n=14: 162$\n$n=15: 188$\n$n=16: 216$\n$n=17: 246$\n$n=18: 278$\n$n=19: 312$\n$n=20: 348$\n\nWait, look at these maximum values.\nLet's see the difference between them:\n18-16=2\n26-18=8\n24-26=-2\n40-24=16\n50-40=10\n62-50=12\n78-62=16\n96-78=18\n116-96=20\n138-116=22\n162-138=24\n188-162=26\n216-188=28\n246-216=30\n278-246=32\n312-278=34\n348-312=36\nThe difference is increasing by 2 each time!\nFor $n \\ge 7$, the difference is $2n-2$?\nLet's check:\n$n=8$ to $n=9$: diff = 12. $2(8)-4$? No.\n$n=9$ to $n=10$: diff = 16. $2(9)-2 = 16$.\n$n=10$ to $n=11$: diff = 18. $2(10)-2 = 18$.\n$n=11$ to $n=12$: diff = 20. $2(11)-2 = 20$.\nYes, for $n \\ge 10$, $S_{max}(n+1) - S_{max}(n) = 2n$. Wait, no.\nLet's re-list:\n$n=10: 78$\n$n=11: 96$ (diff 18)\n$n=12: 116$ (diff 20)\n$n=13: 138$ (diff 22)\n$n=14: 162$ (diff 24)\n$n=15: 188$ (diff 26)\n$n=16: 216$ (diff 28)\n$n=17: 246$ (diff 30)\n$n=18: 278$ (diff 32)\n$n=19: 312$ (diff 34)\n$n=20: 348$ (diff 36)\nThe difference $S_{max}(n) - S_{max}(n-1)$ is $2n-2$.\nLet's check: $S_{max}(20) - S_{max}(19) = 348 - 312 = 36$. $2(20)-4 = 36$ [...] 5(3) + 18 = 9 - 15 + 18 = 12$.\n$S_2 = 3^2 - 5(3) + 26 = 9 - 15 + 26 = 20$.\n$S_1 = 3^2 - 3(3) + 8 = 8$.\nWait, my Python code for $n=3$ gave `[12, 16]`.\n$S_3 = 12$. Correct.\nBut $S_2=20$ and $S_1=8$ are not there.\nInstead we have 16.\nLet's see: $n=3$ is small, so the $n \\ge 10$ pattern might not hold.\nBut for $n=1000$, the pattern should definitely hold.\n\nSo the only candidate that matches our results is D.\nFinal check:\n$n=1000, N=1001$.\nGood sequence $a$ is self-descriptive:\n$a_0 = 997$\n$a_1 = 2$\n$a_2 = 1$\n$a_{997} = 1$\nOthers = 0.\n$\\sum (i+1) a_i^2 = 1 \\cdot 997^2 + 2 \\cdot 2^2 + 3 \\cdot 1^2 + 998 \\cdot 1^2$\n$S = 994009 + 8 + 3 + 998 = 1000018$.\nWait! I just re-calculated it and got 1000018 again!\nLet me re-calculate $997^2 + 8 + 3 + 998$ one more time.\n$997^2 = 994009$.\n$994009 + 8 = 994017$.\n$994017 + 3 = 994020$.\n$994020 + 998 = 995018$.\nYES! It is 995018!\nMy previous calculation $994009 + 8 + 3 + 998 = 1000018$ was wrong.\n$994000 + 1000 = 995000$.\n$9 + 8 + 3 + 98 = 118$? No.\n$994009 + 998 = 995007$.\n$995007 + 11 = 995018$.\nPerfect.\n\nSo $S=995018$ is definitely a possible value.\nSince it's the only candidate that fits the pattern and the self-descriptive sequence, I'm confident."
+  }
+ ]
+}

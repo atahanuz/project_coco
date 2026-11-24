@@ -1,0 +1,19 @@
+### [W2, round 1]
+REPORT on task "Focus on Constraints (ii) and (iv). Derive an equation relating the total number of students $N=579$, the total number of research labs $k$, and the properties of the study groups (specifically how ma": I derived the required equation by counting the total number of student-lab memberships in two ways. Counting by labs, we found the total must be $k \cdot N$. Counting by study groups, we used the properties that groups have odd size ($2m+1$) and belong to exactly $m$ labs. Letting $C_m$ be the count of study groups of size $2m+1$, the total memberships sum to $\sum_{m \ge 1} C_m \cdot m(2m+1)$. Substituting $N=579$, the final derived equation is $579k = \sum_{m \ge 1} C_m \cdot m(2m+1)$.
+Candidate answer: 579k = \sum_{m \ge 1} C_m \cdot m(2m+1)
+
+### [W1, round 1]
+REPORT on task "Analyze Constraint (i) (Every pair of students in exactly one study group) combined with Constraint (iii) (All study groups have odd size $r=2m+1$). Derive necessary conditions or patterns regarding t": By analyzing Constraint (i), the total number of pairs $\binom{579}{2} = 579 \cdot 289$ must equal the sum of pairs contributed by all groups, $\sum \binom{r_i}{2}$. Since $\binom{579}{2}$ is odd, the sum must be odd. We found that $\binom{r_i}{2}$ is odd if and only if the size $r_i$ satisfies $r_i \equiv 3 \pmod 4$. Therefore, there must be an odd number of groups whose size is congruent to 3 modulo 4.
+Candidate answer: The number of study groups with size $r_i \equiv 3 \pmod 4$ must be odd.
+
+### [W3, round 1]
+REPORT on task "Investigate the interaction between the number of groups and the total number of students $N=579$. Can we derive a required relationship involving $N$ and the group sizes that must hold for this struc": I investigated the structural constraints by employing two fundamental counting arguments. First, using Condition (i) (pairwise coverage), I derived $\sum (s_i^2 - s_i) = N(N-1)$. Second, using Conditions (ii) and (iii), I found that the total number of student-lab occurrences must equal both $Nk$ and $\frac{1}{2} \sum (s_i^2 - s_i)$. Equating these results yields the required relationship $\frac{1}{2} N(N-1) = Nk$. Since $N=579$, this forces $k = (N-1)/2$. Therefore, $k = (579-1)/2 = 289$.
+Candidate answer: 289
+
+### [W2, round 2]
+REPORT on task "Substitute the candidate answer $k=289$ into the equation $579k = \sum_{m \ge 1} C_m \cdot m(2m+1)$ and analyze the constraints this places on the required total student-lab memberships (i.e., what co": By substituting the candidate value $k=289$ into the given equation $579k = \sum_{m \ge 1} C_m \cdot m(2m+1)$, we obtain the target equation $167331 = \sum_{m \ge 1} C_m \cdot m(2m+1)$. The constraints on the distribution $\{C_m\}$ are that each $C_m$ must be a non-negative integer, and this sequence must satisfy this resulting linear Diophantine equation.
+Candidate answer: The constraints are that $C_m$ must be non-negative integers such that $\sum_{m \ge 1} C_m (2m^2 + m) = 167331$.
+
+### [W1, round 2]
+REPORT on task "Use the established parity constraint (the number of study groups with size $r_i \equiv 3 \pmod 4$ must be odd) and the result $k=289$ to analyze the necessary distribution of group sizes $\{C_m\}$. D": By combining the conditions for counting pairs and counting student-lab incidences, the value $k=289$ forces the necessary total sum of contributions to be $579 \cdot 289$, which is an odd number. This algebraic requirement exactly implies the established parity constraint that the total number of groups of size $r \equiv 3 \pmod 4$ must be odd. Therefore, $k=289$ confirms the structural consistency of the constraints but does not impose any *new* parity restrictions on the distribution $\{C_m\}$.
+Candidate answer: The set $\{C_m\}$ must satisfy the Diophantine equation $\sum_m C_{2m+1} m(2m+1) = 579 \cdot 289$ and the parity constraint $\sum_{r \equiv 3 \pmod 4} C_r \equiv 1 \pmod 2$.

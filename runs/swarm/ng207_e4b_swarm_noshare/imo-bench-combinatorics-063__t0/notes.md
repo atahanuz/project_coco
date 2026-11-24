@@ -1,0 +1,14 @@
+### [W4, round 1]
+REPORT on task "Test the behavior of the system for parameter sets close to the constraint boundary, i.e., $n=2k+1$. Verify if the results from W1 and W3 hold even in this near-boundary regime.": I tested the system behavior for boundary cases where n=2k+1, specifically for k=1, 2, and 3 (n=3, 5, 7). The minimum number of guesses required is determined by the maximum ambiguity (the maximum number of distinct leader strings that generate the same set of k-neighbors). Numerical checks confirmed that for all tested cases, the maximum ambiguity size is 1. This indicates that the set S uniquely identifies the original leader string L, requiring only one guess to guarantee a correct answer.
+Candidate answer: 1
+
+### [W3, round 1]
+REPORT on task "Analyze the structural requirements for $D(X_1) = D(X_2)$. Specifically, derive constraints on the Hamming distance $d(X_1, X_2)$ based on the condition that the sets of distance-$k$ neighbors coincid": The core requirement $D(X_1) = D(X_2)$ implies that for any string $Y$, $d(X_1, Y) = k$ if and only if $d(X_2, Y) = k$. By applying the Triangle Inequality, we established that if there exists a common neighbor $Y$, then $d(X_1, Y) + d(X_2, Y) \ge d(X_1, X_2)$. If $d(X_1, Y) = k$ and $d(X_2, Y) = k$, this requires $2k \ge d(X_1, X_2)$. If $d > 2k$, the sets $D(X_1)$ and $D(X_2)$ must be disjoint, contradicting the condition $D(X_1) = D(X_2)$. Thus, $d(X_1, X_2) \le 2k$ is a necessary constraint.
+Candidate answer: $d(X_1, X_2) \le 2k$
+
+### [W1, round 1]
+REPORT on task "Theoretically investigate the possibility of two distinct binary strings $X_1$ and $X_2$ generating the same set $D$ of strings at Hamming distance $k$. Determine if the constraint $n>2k$ necessarily ": We investigated the condition $D(X_1) = D(X_2)$ by letting $Z = X_1 + X_2$. This condition requires that for every vector $A$ of weight $k$, the overlap $w(A \cap Z)$ must be exactly $w(Z)/2$. Given the constraint $n > 2k$, this requirement is so restrictive that it forces $w(Z)=0$. Therefore, $X_1$ must equal $X_2$ to generate the same set of neighbors at distance $k$.
+Candidate answer: Yes
+
+### [W2, round 1]
+REPORT on task "Use Python to perform a computational search for small parameters satisfying $n>2k$ (e.g., $n=5, k=2$; $n=7, k=3$). The goal is to find a pair $(X_1, X_2)$ such that $X_1 \neq X_2$ but $D(X_1) = D(X_2": A computational search was performed for small parameters (n, k) satisfying n > 2k, including (5, 2), (7, 3), (6, 2), (9, 4), and (10, 4). In all tested cases, no pair of distinct strings (X1, X2) was found such that the set of strings at Hamming distance k from X1 was identical to the set of strings at Hamming distance k from X2. Thus, no pair satisfying the required condition was found computationally in the tested ranges.

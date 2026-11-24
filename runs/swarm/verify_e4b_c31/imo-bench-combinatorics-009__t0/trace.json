@@ -1,0 +1,154 @@
+{
+ "record": {
+  "id": "imo-bench-combinatorics-009",
+  "trial": 0,
+  "error": null,
+  "seconds": 1311.5,
+  "n_cands": 3,
+  "verdicts": [
+   {
+    "label": "A",
+    "key": "('num', Fraction(51756, 1))",
+    "answer": "51756",
+    "result": "REFUTED",
+    "evidence": "For n=456, a star graph K_{1, 455} gives (455 * 454) / 2 = 103285 pairs. Candidate A's value 51756 is smaller.",
+    "via": "tool"
+   },
+   {
+    "label": "B",
+    "key": "('num', Fraction(103285, 1))",
+    "answer": "103285",
+    "result": "CONFIRMED",
+    "evidence": "The maximum number of pairs not friends but with a common friend in a graph with n vertices is achieved by a star graph K_{1, n-1}, giving (n-1)(n-2)/2 pairs. For n=456, this is 455 * 454 / 2 = 103285.",
+    "via": "tool"
+   },
+   {
+    "label": "C",
+    "key": "('num', Fraction(103185, 1))",
+    "answer": "103185",
+    "result": "REFUTED",
+    "evidence": "For n=456, a star graph K_{1, 455} gives (455 * 454) / 2 = 103285 pairs, which is greater than 103185.",
+    "via": "tool"
+   }
+  ],
+  "status": "checked",
+  "steps": 5,
+  "calls": 5,
+  "prompt_tokens": 32310,
+  "completion_tokens": 8995,
+  "n_python": 2
+ },
+ "log": [
+  {
+   "agent": "CHECKER",
+   "round": 1,
+   "step": 0,
+   "finish": "tool_calls",
+   "completion_tokens": 3590,
+   "prompt_tokens": 652,
+   "reasoning_chars": 7748,
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "run_python",
+     "args": {
+      "code": "import itertools\nimport networkx as nx\n\ndef solve_small(n):\n    max_n2 = 0\n    # We can iterate over all possible graphs with n vertices.\n    # The number of possible edges is n*(n-1)//2.\n    # Total graphs = 2^(n*(n-1)//2).\n    # For n=5, total graphs = 2^10 = 1024.\n    # For n=6, total graphs = 2^15 = 32768.\n    # For n=7, total graphs = 2^21 = 2,097,152.\n    \n    num_edges_max = n * (n - 1) // 2\n    for edges_count in range(num_edges_max + 1):\n        for edges in itertools.combinations(itertools.combinations(range(n), 2), edges_count):\n            G = nx.Graph()\n            G.add_nodes_from(range(n))\n            G.add_edges_from(edges)\n            \n            n2 = 0\n            for u, v in itertools.combinations(range(n), 2):\n                if not G.has_edge(u, v):\n                    # Check if they have a common neighbor\n                    if any(G.has_edge(u, w) and G.has_edge(v, w) for w in range(n)):\n                        n2 += 1\n            if n2 > max_n2:\n                max_n2 = n2\n    return max_n2\n\nprint(f\"n=3: {solve_small(3)}\")\nprint(f\"n=4: {solve_small(4)}\")\nprint(f\"n=5: {solve_small(5)}\")\nprint(f\"n=6: {solve_small(6)}\")\n"
+     },
+     "salvaged": false,
+     "result": "n=3: 1\nn=4: 3\nn=5: 6\nn=6: 10"
+    }
+   ],
+   "reasoning_excerpt": "*   Total participants: $n = 456$.\n    *   Participants form a graph $G = (V, E)$, where $V$ is the set of participants and $E$ is the set of friendship pairs.\n    *   A pair of participants $(u, v)$ is \"not friends but have a common friend\" if $(u, v) \\notin E$ and there exists $w \\in V$ such that $(u, w) \\in E$ and $(v, w) \\in E$.\n    *   We want to maximize the number of such pairs.\n\n    *   Let $N$ be the number of such pairs.\n    *   Let $d(v)$ be the degree of vertex $v$.\n    *   The number of pairs $(u, v)$ that have a common friend $w$ is $\\sum_{w \\in V} \\binom{d(w)}{2}$.\n    *   However, some of these pairs $(u, v)$ might be friends themselves, and some may have multiple common friends.\n    *   Wait, the problem says \"the two are not friends but have a common friend\".\n    *   Let $S$ be the set of pairs $\\{u, v\\}$ such that $u \\neq v$.\n    *   Let $E$ be the set of edges (friends).\n    *   Let $F$ be the set of pairs $\\{u, v\\}$ that have at least one common friend.\n    *   We want to maximize $|F \\setminus E|$.\n\n    *   If $G$ is a complete bipartite graph $K_{a, b}$ with $a + b = n$:\n        *   $E$ contains $ab$ edges.\n        *   If $u, v$ are in the same part:\n         [...]  distance 2.\n        *   Turan-like problem?\n        *   If the graph is a star $K_{1, n-1}$, $N_2 = \\binom{n-1}{2}$.\n        *   Is it possible to have more than $\\binom{n-1}{2}$?\n        *   For $n=5$, $\\binom{4}{2} = 6$.\n        *   Can we get 7?\n        *   Total pairs is $\\binom{5}{2} = 10$.\n        *   If $N_2 = 7$, then $E$ must have at most 3 edges (since $N_2 + |E| \\le \\binom{n}{2}$).\n        *   If $|E| = 3$, the maximum number of pairs at distance 2:\n            *   If the edges are (1, 2), (1, 3), (1, 4), then (2, 3), (2, 4), (3, 4) are at distance 2. $N_2 = 3$.\n            *   If the edges are (1, 2), (2, 3), (3, 4), then (1, 3), (2, 4) are at distance 2. $N_2 = 2$.\n        *   Wait, if $|E| = 4$:\n            *   Star $K_{1, 4}$: $N_2 = 6$.\n            *   Cycle $C_4$ and one isolated vertex: $N_2 = 2$.\n            *   Path $P_5$: edges (1, 2), (2, 3), (3, 4), (4, 5). Pairs at distance 2: (1, 3), (2, 4), (3, 5). $N_2 = 3$.\n        *   If $|E| = 5$:\n            *   $C_5$: $N_2 = 5$.\n            *   $K_{2, 3}$: $N_2 = \\binom{2}{2} + \\binom{3}{2} = 1 + 3 = 4$.\n\n    *   Let's write a small Python script to check for $n=5, 6, 7$ and see if $N_2$ can exceed $\\binom{n-1}{2}$."
+  },
+  {
+   "agent": "CHECKER",
+   "round": 1,
+   "step": 1,
+   "finish": "tool_calls",
+   "completion_tokens": 4067,
+   "prompt_tokens": 4285,
+   "reasoning_chars": 9098,
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "run_python",
+     "args": {
+      "code": "import itertools\nimport networkx as nx\n\ndef solve_small(n):\n    max_n2 = 0\n    # For larger n, we cannot iterate over all graphs.\n    # But we can try some common types:\n    # 1. Star graph\n    # 2. Complete bipartite graphs K_{a, b}\n    # 3. Random graphs\n    # 4. Graphs with a few high-degree nodes\n    \n    # Star graph\n    max_n2 = (n-1)*(n-2)//2\n    \n    # Complete bipartite K_{a, b}\n    for a in range(1, n):\n        b = n - a\n        n2 = a*(a-1)//2 + b*(b-1)//2\n        if n2 > max_n2:\n            max_n2 = n2\n            \n    # Let's try some random graphs\n    import random\n    for _ in range(10000):\n        # Randomly choose an edge probability\n        p = random.random()\n        G = nx.fast_gnp_random_graph(n, p)\n        n2 = 0\n        for u, v in itertools.combinations(range(n), 2):\n            if not G.has_edge(u, v):\n                if any(G.has_edge(u, w) and G.has_edge(v, w) for w in range(n)):\n                    n2 += 1\n        if n2 > max_n2:\n            max_n2 = n2\n            \n    return max_n2\n\nfor n in range(3, 11):\n    print(f\"n={n}: {solve_small(n)}\")\n"
+     },
+     "salvaged": false,
+     "result": "n=3: 1\nn=4: 3\nn=5: 6\nn=6: 10\nn=7: 15\nn=8: 21\nn=9: 28\nn=10: 36"
+    }
+   ],
+   "reasoning_excerpt": "*   For $n=3$, $\\binom{2}{2} = 1$.\n    *   For $n=4$, $\\binom{3}{2} = 3$.\n    *   For $n=5$, $\\binom{4}{2} = 6$.\n    *   For $n=6$, $\\binom{5}{2} = 10$.\n    *   It seems the maximum is indeed $\\binom{n-1}{2}$.\n    *   Wait, let's check $n=7$. $\\binom{6}{2} = 15$.\n    *   Wait, can we have a graph with more than $\\binom{n-1}{2}$?\n    *   Let's double check my logic. If we have a star $K_{1, n-1}$, then the center is connected to all other $n-1$ vertices. The $n-1$ leaves are not connected to each other. Every pair of leaves has the center as a common friend. So there are $\\binom{n-1}{2}$ such pairs.\n    *   Is it possible to have more?\n    *   If we have a graph $G$, the number of pairs $\\{u, v\\} \\notin E$ with a common friend is $|F \\setminus E|$.\n    *   $|F \\setminus E| = |F| - |F \\cap E|$.\n    *   $|F|$ is the number of pairs $\\{u, v\\}$ that have at least one common friend.\n    *   If we take $K_{1, n-1}$, then $F$ is the set of all pairs of leaves, so $|F| = \\binom{n-1}{2}$. Since no leaves are connected, $|F \\cap E| = 0$. So $|F \\setminus E| = \\binom{n-1}{2}$.\n    *   If we take a different graph, say a complete bipartite graph $K_{a, b}$ with $a+b=n$.\n        *   $|E| = ab$.\n [...] on.\n    *   Let's re-read: \"common friend among the participants\". This confirms that the common friend must be one of the 456 people.\n\n    *   $n = 456$.\n    *   $\\binom{n-1}{2} = \\binom{455}{2} = 103285$.\n    *   Is there any other possible interpretation?\n    *   \"maximum possible number of the pairs for which the two are not friends but have a common friend\"\n    *   This is exactly what I've been calculating.\n\n    *   A: 51756. This is $2 \\binom{228}{2}$. This is the number of pairs at distance 2 for $K_{228, 228}$.\n    *   B: 103285. This is $\\binom{455}{2}$. This is the number of pairs at distance 2 for $K_{1, 455}$.\n    *   C: 103185. This is $\\binom{455}{2} - 100$.\n\n    *   Wait, let's double check if any other graph could be better.\n    *   The problem of maximizing the number of pairs at distance 2.\n    *   This is a known problem. For any graph, the number of pairs at distance 2 is $\\sum_{v} \\binom{d(v)}{2} - 3 \\times (\\text{number of triangles}) - \\dots$ no, that's not it.\n    *   Actually, the number of pairs $\\{u, v\\}$ with a common friend is $|\\bigcup_{w \\in V} \\{ \\{u, v\\} : u, v \\in N(w) \\}|$.\n    *   Let's use the Python script to check for $n=7, 8$ more carefully."
+  },
+  {
+   "agent": "CHECKER",
+   "round": 1,
+   "step": 2,
+   "finish": "tool_calls",
+   "completion_tokens": 960,
+   "prompt_tokens": 8428,
+   "reasoning_chars": 2174,
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "verdict",
+     "args": {
+      "candidate": "A",
+      "evidence": "For n=456, a star graph K_{1, 455} gives (455 * 454) / 2 = 103285 pairs. Candidate A's value 51756 is smaller.",
+      "result": "REFUTED"
+     },
+     "salvaged": false,
+     "result": "Recorded. Still to judge: B, C."
+    }
+   ],
+   "reasoning_excerpt": "*   All values match $\\binom{n-1}{2}$.\n    *   $n=3: \\binom{2}{2} = 1$\n    *   $n=4: \\binom{3}{2} = 3$\n    *   $n=5: \\binom{4}{2} = 6$\n    *   $n=6: \\binom{5}{2} = 10$\n    *   $n=7: \\binom{6}{2} = 15$\n    *   $n=8: \\binom{7}{2} = 21$\n    *   $n=9: \\binom{8}{2} = 28$\n    *   $n=10: \\binom{9}{2} = 36$\n    *   The result $\\binom{n-1}{2}$ is very robust.\n    *   For $n=456$, $\\binom{455}{2} = 103285$.\n    *   This is candidate B.\n\n    *   Could \"X\" be a person who can be a friend but is not a participant?\n    *   \"456 people participate... Additionally, there is a mysterious object called 'X' that is present at the party.\"\n    *   \"common friend among the participants\"\n    *   This means the common friend must be one of the 456 people.\n    *   Even if X could be a friend, the common friend must be among the participants.\n    *   Wait, does \"two are not friends\" apply to the 456 people? \"maximum possible number of the pairs for which the two are not friends but have a common friend among the participants\".\n    *   The \"pairs\" must be pairs of participants.\n    *   If there were $n$ participants, the number of pairs is $\\binom{n}{2}$.\n    *   For $n=456$, $\\binom{455}{2} = 103285$.\n\n    *   Wait, let's double check the calculation one more time.\n    *   $455 \\times 454 / 2 = 455 \\times 227$.\n    *   $455 \\times 200 = 91000$.\n    *   $455 \\times 20 = 9100$.\n    *   $455 \\times 7 = 3185$.\n    *   $91000 + 9100 = 100100$.\n    *   $100100 + 3185 = 103285$.\n    *   Yes, the calculation is correct.\n\n    *   Is there any other graph structure?\n    *   What if we have a graph where almost every pair is at distance 2?\n    *   We already checked that if $N_2 > \\binom{n-1}{2}$, then $|E| < n-1$.\n    *   But if $|E| < n-1$, the graph is not connected.\n    *   And we checked that for disconnected graphs, the sum of $\\binom{n_i-1}{2}$ is less than $\\binom{n-1}{2}$.\n    *   So the star graph is indeed the maximum.\n    *   The result is $\\binom{455}{2} = 103285$.\n    *   This is candidate B.\n\n    *   A: 51756 (corresponds to $K_{228, 228}$)\n    *   B: 103285 (corresponds to $K_{1, 455}$)\n    *   C: 103185 (no obvious meaning)\n    *   The maximum is indeed B."
+  },
+  {
+   "agent": "CHECKER",
+   "round": 1,
+   "step": 3,
+   "finish": "tool_calls",
+   "completion_tokens": 103,
+   "prompt_tokens": 9412,
+   "reasoning_chars": 0,
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "verdict",
+     "args": {
+      "candidate": "B",
+      "evidence": "The maximum number of pairs not friends but with a common friend in a graph with n vertices is achieved by a star graph K_{1, n-1}, giving (n-1)(n-2)/2 pairs. For n=456, this is 455 * 454 / 2 = 103285.",
+      "result": "CONFIRMED"
+     },
+     "salvaged": false,
+     "result": "Recorded. Still to judge: C."
+    }
+   ],
+   "reasoning_excerpt": ""
+  },
+  {
+   "agent": "CHECKER",
+   "round": 1,
+   "step": 4,
+   "finish": "tool_calls",
+   "completion_tokens": 275,
+   "prompt_tokens": 9533,
+   "reasoning_chars": 667,
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "verdict",
+     "args": {
+      "candidate": "C",
+      "evidence": "For n=456, a star graph K_{1, 455} gives (455 * 454) / 2 = 103285 pairs, which is greater than 103185.",
+      "result": "REFUTED"
+     },
+     "salvaged": false,
+     "result": "Recorded. Still to judge: nothing."
+    }
+   ],
+   "reasoning_excerpt": "*   Wait, just to be absolutely sure, is there any other possible interpretation of \"common friend among the participants\"?\n*   Does \"X\" play a role? \"Additionally, there is a mysterious object called 'X' that is present at the party.\"\n*   If X is not a person, it cannot be a friend.\n*   If X is a person, it would be 457 people. $\\binom{456}{2} = 103740$. Not among the candidates.\n*   What if X is one of the 456 people? But it says \"Additionally\".\n*   What if X is some kind of entity that everyone is friends with?\n*   \"common friend among the participants\". If X is not a participant, X cannot be the common friend.\n*   So the answer should be $\\binom{455}{2}$."
+  }
+ ]
+}
